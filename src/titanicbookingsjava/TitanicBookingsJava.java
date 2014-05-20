@@ -22,7 +22,9 @@ public class TitanicBookingsJava {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Connection conn = JavaConnectDB.connectDB();
+        Flights f = new Flights();
+        f.displayAllFlights();
+        /*Connection conn = JavaConnectDB.connectDB();
         
         String sqlStmt2 = "Insert into students values (2)";        
         try 
@@ -49,7 +51,7 @@ public class TitanicBookingsJava {
         catch(Exception e )
         {
             System.out.println("Error: "+e);
-        }
+        }*/
     }
     
 }
