@@ -354,7 +354,7 @@ public class Flights implements ActionListener
        
         //GET THE FLIGHTS AND PUT IT IN THE GUI
         
-       String select_Flight_Table_stmt="{call RETRIEVE_ALL_FLIGHTS(?,?,?,?,?,?,?,?,?)}"+"";
+       String select_Flight_Table_stmt="{call RETRIEVE_SELECTED_FLIGHTS(?,?,?,?,?,?,?,?,?,?)}"+"";
        
        CallableStatement callableStatement;
        ResultSet result;
@@ -381,15 +381,14 @@ public class Flights implements ActionListener
                // dataTxt = new String[amountFlights][5];
                 
                 while(result.next())
-                {
-                    if(debuggingFlag){System.out.println("Amount of records: "+countRecords);}
-                    dataTxt[countRecords][0].setText(result.getInt(3)+"");
-                    dataTxt[countRecords][1].setText(result.getDate(4)+"");
-                    dataTxt[countRecords][2].setText(result.getString(5));
-                    dataTxt[countRecords][3].setText(result.getString(6));
-                    dataTxt[countRecords][4].setText(result.getInt(7)+" / "+result.getInt(8));
+                {                    
+                    dataTxt[countRecords][0].setText(result.getInt("flightNumber")+"");
+                    dataTxt[countRecords][1].setText(result.getDate("flightDate")+"");
+                    dataTxt[countRecords][2].setText(result.getString("departCity"));
+                    dataTxt[countRecords][3].setText(result.getString("arriveCity"));
+                    dataTxt[countRecords][4].setText(result.getInt("seatsAvailable")+" / "+result.getInt("seatsSold"));
 
-                    if(result.getInt(10) ==-1) //-1 is cancelled, 0 is not cancelled
+                    if(result.getInt("cancelled") ==-1) //-1 is cancelled, 0 is not cancelled
                     {
                         for(int j=0;j<5;j++)
                         {
@@ -399,7 +398,6 @@ public class Flights implements ActionListener
                     }
                     countRecords++;
                 }
-                System.out.println("done" + countRecords);
             }
             catch(Exception e )
             {
@@ -498,14 +496,14 @@ public class Flights implements ActionListener
                 
                 while(result.next())
                 {
-                    if(debuggingFlag){System.out.println("Amount of records: "+countRecords);}
-                    dataTxt[countRecords][0].setText(result.getInt(2)+"");
-                    dataTxt[countRecords][1].setText(result.getDate(3)+"");
-                    dataTxt[countRecords][2].setText(result.getString(4));
-                    dataTxt[countRecords][3].setText(result.getString(5));
-                    dataTxt[countRecords][4].setText(result.getInt(6)+" / "+result.getInt(7));
+                    //if(debuggingFlag){System.out.println("Amount of records: "+countRecords);}
+                    dataTxt[countRecords][0].setText(result.getInt("flightNumber")+"");
+                    dataTxt[countRecords][1].setText(result.getDate("flightDate")+"");
+                    dataTxt[countRecords][2].setText(result.getString("departCity"));
+                    dataTxt[countRecords][3].setText(result.getString("arriveCity"));
+                    dataTxt[countRecords][4].setText(result.getInt("seatsAvailable")+" / "+result.getInt("seatsSold"));
 
-                    if(result.getInt(9) ==-1) //-1 is cancelled, 0 is not cancelled
+                    if(result.getInt("cancelled") ==-1) //-1 is cancelled, 0 is not cancelled
                     {
                         for(int j=0;j<5;j++)
                         {

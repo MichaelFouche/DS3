@@ -18,9 +18,9 @@ public class JavaConnectDB {
         try{
             String driverName = "oracle.jdbc.OracleDriver";   
             Class.forName(driverName);
-            System.out.println("Trying to connect to database");
+            //System.out.println("Trying to connect to database");
             Connection conn=DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:XE","TITANICBOOKINGS","panda");
-            System.out.println("Connected");  
+            //System.out.println("Connected");  
             return conn;
         }
         catch(Exception e){
