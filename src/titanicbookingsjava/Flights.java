@@ -14,9 +14,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -29,6 +32,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import oracle.jdbc.OracleTypes;
 
 /**
  *
@@ -241,6 +245,10 @@ public class Flights implements ActionListener
     //This method is called by the networkClient class
     public void addDataPanel(int r)
     {
+        if(!guiCreatedBool)
+        {
+            createFlightGui();
+        }
         rows = r;
         monthSelected = false;
         jf.remove(scroll);
@@ -304,6 +312,10 @@ public class Flights implements ActionListener
     
     public void addCenterPanel()
     {
+        if(!guiCreatedBool)
+        {
+            createFlightGui();
+        }
             jf.remove(centerPanel);
             centerPanel = new JPanel(new GridLayout(3,6));
             
@@ -335,40 +347,49 @@ public class Flights implements ActionListener
     }
     public void displayFilteredFlights()
     {
-       //GET AMOUNT OF FLIGHTS
-        /*try
+       if(!guiCreatedBool)
         {
-            Connection conn = JavaConnectDB.connectDB();
-            String count_flights_stmt = "SELECT COUNT * FROM FLIGHTS;";
-            
-            PreparedStatement preStatement = conn.prepareStatement(count_flights_stmt);
-            ResultSet result = preStatement.executeQuery();   
-            amountFlights = result.getInt(1);
-            if(debuggingFlag){System.out.println("Amount of flights: "+amountFlights);}
+            createFlightGui();
         }
-        catch(Exception count_e)
-        {
-             System.out.println("Error at count flights from database: \n"+count_e);
-        }
+       
         //GET THE FLIGHTS AND PUT IT IN THE GUI
-       String select_Flight_Table_stmt="{call retrieve_selected_Flights(?,?,?,?,?,?,?,?)}"+";";
+        
+       String select_Flight_Table_stmt="{call RETRIEVE_ALL_FLIGHTS(?,?,?,?,?,?,?,?,?)}"+"";
+       
+       CallableStatement callableStatement;
+       ResultSet result;
+       Connection conn;
         try 
         {
-            Connection conn = JavaConnectDB.connectDB();
+            conn = JavaConnectDB.connectDB();
             try 
             {   
-                PreparedStatement preStatement = conn.prepareStatement(select_Flight_Table_stmt);
-                ResultSet result = preStatement.executeQuery();            
-                int countRecords = 0;               
+                callableStatement = conn.prepareCall(select_Flight_Table_stmt);
+                callableStatement.registerOutParameter(1, OracleTypes.CURSOR);
+                callableStatement.setString(2, cityToFilter);
+                callableStatement.registerOutParameter(3, Types.INTEGER);
+                callableStatement.registerOutParameter(4, Types.DATE);
+                callableStatement.registerOutParameter(5, Types.VARCHAR);
+                callableStatement.registerOutParameter(6, Types.VARCHAR);
+                callableStatement.registerOutParameter(7, Types.INTEGER);
+                callableStatement.registerOutParameter(8, Types.INTEGER);
+                callableStatement.registerOutParameter(9, Types.DECIMAL);
+                callableStatement.registerOutParameter(10, Types.INTEGER);
+                callableStatement.execute();
+                result =  (ResultSet)callableStatement.getObject(1);        
+                int countRecords = 0;    
+               // dataTxt = new String[amountFlights][5];
+                
                 while(result.next())
                 {
-                    dataTxt[countRecords][0].setText(result.getInt(1)+"");
-                    dataTxt[countRecords][1].setText(result.getDate(2)+"");
-                    dataTxt[countRecords][2].setText(result.getString(3));
-                    dataTxt[countRecords][3].setText(result.getString(4));
-                    dataTxt[countRecords][4].setText(result.getInt(5)+" / "+result.getInt(6));
+                    if(debuggingFlag){System.out.println("Amount of records: "+countRecords);}
+                    dataTxt[countRecords][0].setText(result.getInt(3)+"");
+                    dataTxt[countRecords][1].setText(result.getDate(4)+"");
+                    dataTxt[countRecords][2].setText(result.getString(5));
+                    dataTxt[countRecords][3].setText(result.getString(6));
+                    dataTxt[countRecords][4].setText(result.getInt(7)+" / "+result.getInt(8));
 
-                    if(result.getInt(8) ==-1) //-1 is cancelled, 0 is not cancelled
+                    if(result.getInt(10) ==-1) //-1 is cancelled, 0 is not cancelled
                     {
                         for(int j=0;j<5;j++)
                         {
@@ -378,25 +399,49 @@ public class Flights implements ActionListener
                     }
                     countRecords++;
                 }
-                System.out.println("done");
+                System.out.println("done" + countRecords);
             }
             catch(Exception e )
             {
                 System.out.println("Error: "+e);
+                e.printStackTrace();
             }
-            conn.close(); // close the Connection to let the database know we're done with it
+            finally{
+            try {
+                conn.close();
+                
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+            
         }
         catch (Exception err) 
         {
-            System.out.println("SEND ALL FLIGHTS: " + err);
-        } */ 
+            System.out.println("SEND SELECTED FLIGHTS: " + err);
+        }  
     }
-    public void getAllFlights()
-    {
-        if(!guiCreatedBool)
+    public void getAmountOfFilteredFlights(String departCity){
+        try
         {
-            createFlightGui();
+            Connection conn = JavaConnectDB.connectDB();
+            String count_flights_stmt = "SELECT COUNT (*) FROM FLIGHT WHERE departCity = '"+departCity+"'";
+            
+            PreparedStatement preStatement = conn.prepareStatement(count_flights_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            while(result.next()){
+                amountFlights = result.getInt(1);
+                if(debuggingFlag){System.out.println("Amount of flights: "+amountFlights);}
+            }
+            
+            conn.close();
         }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at count flight from database: \n"+count_e);
+        }
+    }
+    public void getAmountOfFlights(){
         //GET AMOUNT OF FLIGHTS
         try
         {
@@ -416,27 +461,51 @@ public class Flights implements ActionListener
         {
              System.out.println("Error at count flight from database: \n"+count_e);
         }
-        
+    }
+    public void getAllFlights()
+    {
+        if(!guiCreatedBool)
+        {
+            createFlightGui();
+        }
+       
         //GET THE FLIGHTS AND PUT IT IN THE GUI
-        int fnum;
-       String select_Flight_Table_stmt="{call RETRIEVE_SELECTED_FLIGHTS('George',?,?,?,?,?,?,?,?)}"+"";
+        
+       String select_Flight_Table_stmt="{call RETRIEVE_ALL_FLIGHTS(?,?,?,?,?,?,?,?,?)}"+"";
+       
+       CallableStatement callableStatement;
+       ResultSet result;
+       Connection conn;
         try 
         {
-            Connection conn = JavaConnectDB.connectDB();
+            conn = JavaConnectDB.connectDB();
             try 
             {   
-                PreparedStatement preStatement = conn.prepareStatement(select_Flight_Table_stmt);
-                ResultSet result = preStatement.executeQuery();            
-                int countRecords = 0;               
+                callableStatement = conn.prepareCall(select_Flight_Table_stmt);
+                callableStatement.registerOutParameter(1, OracleTypes.CURSOR);
+                callableStatement.registerOutParameter(2, Types.INTEGER);
+                callableStatement.registerOutParameter(3, Types.DATE);
+                callableStatement.registerOutParameter(4, Types.VARCHAR);
+                callableStatement.registerOutParameter(5, Types.VARCHAR);
+                callableStatement.registerOutParameter(6, Types.INTEGER);
+                callableStatement.registerOutParameter(7, Types.INTEGER);
+                callableStatement.registerOutParameter(8, Types.DECIMAL);
+                callableStatement.registerOutParameter(9, Types.INTEGER);
+                callableStatement.execute();
+                result =  (ResultSet)callableStatement.getObject(1);        
+                int countRecords = 0;    
+               // dataTxt = new String[amountFlights][5];
+                
                 while(result.next())
                 {
-                    dataTxt[countRecords][0].setText(result.getInt(1)+"");
-                    dataTxt[countRecords][1].setText(result.getDate(2)+"");
-                    dataTxt[countRecords][2].setText(result.getString(3));
-                    dataTxt[countRecords][3].setText(result.getString(4));
-                    dataTxt[countRecords][4].setText(result.getInt(5)+" / "+result.getInt(6));
+                    if(debuggingFlag){System.out.println("Amount of records: "+countRecords);}
+                    dataTxt[countRecords][0].setText(result.getInt(2)+"");
+                    dataTxt[countRecords][1].setText(result.getDate(3)+"");
+                    dataTxt[countRecords][2].setText(result.getString(4));
+                    dataTxt[countRecords][3].setText(result.getString(5));
+                    dataTxt[countRecords][4].setText(result.getInt(6)+" / "+result.getInt(7));
 
-                    if(result.getInt(8) ==-1) //-1 is cancelled, 0 is not cancelled
+                    if(result.getInt(9) ==-1) //-1 is cancelled, 0 is not cancelled
                     {
                         for(int j=0;j<5;j++)
                         {
@@ -451,8 +520,17 @@ public class Flights implements ActionListener
             catch(Exception e )
             {
                 System.out.println("Error: "+e);
+                e.printStackTrace();
             }
-            conn.close(); // close the Connection to let the database know we're done with it
+            finally{
+            try {
+                conn.close();
+                
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+            
         }
         catch (Exception err) 
         {
@@ -464,13 +542,16 @@ public class Flights implements ActionListener
     {
         if(!filterCity)
         {
+            getAmountOfFlights();
+            addDataPanel(amountFlights);
             getAllFlights();
         }
         else
         {
+            getAmountOfFilteredFlights(cityToFilter);            
+            addDataPanel(amountFlights);
             displayFilteredFlights();
         }        
-        addDataPanel(amountFlights);
        
         
         
