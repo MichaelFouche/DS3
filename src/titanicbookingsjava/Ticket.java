@@ -40,6 +40,7 @@ public class Ticket  implements ActionListener{
     private int flightNumber;
     private int amountTickets;
     private int flightNumberT;
+    boolean flightCancelled;
     private int rowsT;
     private boolean guiCreatedTicketBool;
     private int currentActiveflightNumber;
@@ -64,7 +65,10 @@ public class Ticket  implements ActionListener{
     //BOTTOM PANEL    
     private JButton saveChangesTBtn, cancelFlightTBtn, deleteAllTicketsTBtn, deleteFlightTBtn;
     public Ticket(){
-        
+        guiCreatedTicketBool = false;
+        rowsT = 0;
+        flightCancelled = false;
+        //ticketQuantitySelected = false;
     }
      public void createTicketGui(int flightnum)
     {
@@ -255,8 +259,10 @@ public class Ticket  implements ActionListener{
             ResultSet result = preStatement.executeQuery();   
             while(result.next()){
                 amountTickets = result.getInt(1);
+                
             }
-            
+            rowsT = amountTickets;
+            System.out.println("Amount of Tickets: "+ amountTickets);
             conn.close();
         }
         catch(Exception count_e)
@@ -264,19 +270,52 @@ public class Ticket  implements ActionListener{
              System.out.println("Error at count flight from database: \n"+count_e);
         }
     }
+    public void getCancelled(){
+        
+        //GET AMOUNT OF FLIGHTS
+        try
+        {
+            Connection conn = JavaConnectDB.connectDB();
+            String count_tickets_stmt = "select cancelled from flight where flightnumber = '"+flightNumber+ "' ";
+            
+            PreparedStatement preStatement = conn.prepareStatement(count_tickets_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            int fCancelled=0;
+            while(result.next()){
+                fCancelled = result.getInt(1);                
+            }
+            if(fCancelled == 0){
+                flightCancelled = false;
+            }
+            else
+            {
+                flightCancelled = true;
+            }  
+            System.out.println("Amount of Tickets: "+ amountTickets);
+            conn.close();
+        }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at count flight from database: \n"+count_e);
+        }
+    }
+    
     public void retrieveAllTickets(int currentActiveflightNumber)
     {
         //--------------------------------------------
-        String select_Ticket_Table_stmt="{call RETRIEVE_TICKET(?,?,?,?,?,?,?,?)}"+"";
+        String select_Ticket_Table_stmt="{call RETRIEVE_TICKET(?,?,?,?,?,?,?)}"+"";
        
+        
+
         CallableStatement callableStatement;
         ResultSet result;
         Connection conn;
         flightNumber = currentActiveflightNumber;
-        boolean flightCancelled = false;
+        
         try 
         {
             getAmountOfTicketsOnFlight();
+            System.out.println("Amount of Tickets2: "+ amountTickets);
             if(guiCreatedTicketBool == false)
             {
                 createTicketGui(flightNumber);  
@@ -294,7 +333,6 @@ public class Ticket  implements ActionListener{
                 callableStatement.registerOutParameter(5, Types.VARCHAR);
                 callableStatement.registerOutParameter(6, Types.INTEGER);
                 callableStatement.registerOutParameter(7, Types.DECIMAL);
-                callableStatement.registerOutParameter(8, Types.BOOLEAN);
                 callableStatement.execute();
                 result =  (ResultSet)callableStatement.getObject(1);        
                 int countRecords = 0;    
@@ -302,22 +340,23 @@ public class Ticket  implements ActionListener{
                 
                 while(result.next())
                 {
-                    dataTTxt[countRecords][0].setText(result.getString("ticketnumber"));
-                    dataTTxt[countRecords][1].setText(result.getString("flightnumber"));
-                    dataTTxt[countRecords][2].setText(result.getString("seatsbooked"));
-                    dataTTxt[countRecords][3].setText(result.getString("amountpaid"));
-                    dataTTxt[countRecords][4].setText(result.getString("passengerid"));                
-                    flightCancelled = result.getBoolean("cancelled");
-                    if(flightCancelled)
-                    {
-                        for(int j=0;j<5;j++)
-                        {
-                            dataTTxt[countRecords][j].setOpaque(true);
-                            dataTTxt[countRecords][j].setBackground(Color.ORANGE);
-                        }
-                    }
-                    countSeatsTaken = countSeatsTaken+( Integer.parseInt( dataTTxt[countRecords][2].getText()+""));
+                    dataTTxt[countRecords][0].setText(result.getInt("ticketnumber")+"");
+                    dataTTxt[countRecords][1].setText(result.getString("pName"));
+                    dataTTxt[countRecords][2].setText(result.getString("pSurname"));
+                    dataTTxt[countRecords][3].setText(result.getInt("seatsBooked")+"");
+                    dataTTxt[countRecords][4].setText(result.getDouble("amountPaid")+""); 
+                                         
+                    
+                    countSeatsTaken = countSeatsTaken+( Integer.parseInt( dataTTxt[countRecords][3].getText()+""));
                     countRecords++;
+                }
+                if(flightCancelled)
+                {
+                    for(int j=0;j<5;j++)
+                    {
+                        dataTTxt[countRecords][j].setOpaque(true);
+                        dataTTxt[countRecords][j].setBackground(Color.ORANGE);
+                    }
                 }
                 addCenterPanelTicket();
             }

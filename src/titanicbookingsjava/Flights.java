@@ -89,6 +89,8 @@ public class Flights implements ActionListener
          guiCreatedTicketBool = false;
          filterCity = false;
          debuggingFlag = false; 
+         
+         
     }
     
     public void createFlightGui()
