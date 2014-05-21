@@ -20,6 +20,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -82,15 +84,16 @@ public class Flights implements ActionListener
     private boolean debuggingFlag; 
     
     public Flights(){
+         rows = 0;
          guiCreatedBool = false;
          guiCreatedTicketBool = false;
          filterCity = false;
-         debuggingFlag = true; 
+         debuggingFlag = false; 
     }
     
     public void createFlightGui()
     {
-        
+        if(debuggingFlag){System.out.println("CREATE FLIGHT GUI");}
         jf = new JFrame("Flight Management");
         JMenuBar menuBar = new JMenuBar();    
         jf.setJMenuBar(menuBar);
@@ -240,19 +243,24 @@ public class Flights implements ActionListener
                 jf.setVisible(true);
             }
         });
+        if(debuggingFlag){System.out.println("FLIGHT GUI CREATED");}
     }
     
     //This method is called by the networkClient class
     public void addDataPanel(int r)
     {
+        if(debuggingFlag){System.out.println("ADD DATA PANEL");}
         if(!guiCreatedBool)
         {
             createFlightGui();
         }
         rows = r;
         monthSelected = false;
+        if(debuggingFlag){System.out.println("Before jf.remove(scroll)");}
         jf.remove(scroll);
+        if(debuggingFlag){System.out.println("After jf.remove(scroll");}
         int difference = 10-rows;
+        if(debuggingFlag){System.out.println("DATAP- BEFORE GRIDLAYOUT");}
         if(difference>0)
         {
             topPanel = new JPanel(new GridLayout(rows+1+difference, 6)); 
@@ -261,7 +269,7 @@ public class Flights implements ActionListener
         {
             topPanel = new JPanel(new GridLayout(rows+1, 6)); 
         }
-        
+        if(debuggingFlag){System.out.println("DATAP- AFTER GRIDLAYOUT");}
         flightLbl = new JLabel("Flight Number");
         dateLbl = new JLabel("Date");
         fromLbl = new JLabel("Departing From");
@@ -275,78 +283,91 @@ public class Flights implements ActionListener
         topPanel.add(toLbl);
         topPanel.add(seatsLbl);
         topPanel.add(openLbl);
-                
+        if(debuggingFlag){System.out.println("DATAP- labels added to top panel");}  
+        if(debuggingFlag){System.out.println("DATAP- size of rows: "+rows);}
+        if(debuggingFlag){System.out.println("DATAP- size of difference: "+difference);}
         dataTxt = new JTextField[rows][5];
         openBtn = new JButton[rows];
-        
+        if(debuggingFlag){System.out.println("DATAP- jtextfields initialised: ");}
         for(int i=0;i<rows;i++)
-        {            
+        {   //System.out.println("i"+i);         
             for(int j=0;j<5;j++)
-            {
-                dataTxt[i][j] = null;
+            {//<------------------------------The bug happends here
+                //System.out.println("");  
+                // dataTxt[i][j] = null;
+                //System.out.print("a");       
                 dataTxt[i][j] = new JTextField(10);
+                //System.out.print("b");  
                 dataTxt[i][j].setEditable(false);
+                //System.out.print("c");  
                 topPanel.add(dataTxt[i][j]); 
-            }
+                //System.out.print("d");  
+            }//<------------------------------The bug happends here
+            //System.out.println("");
             openBtn[i] = null;
+            //System.out.print("i-");  
             openBtn[i] = new JButton("Open Flight");
+            //System.out.print("ii-");  
             openBtn[i].addActionListener(this);
+            //System.out.print("iii-");  
             topPanel.add(openBtn[i]);
         }
-        
+        if(debuggingFlag){System.out.println("DATAP- items added to top panel");}
         for(int i=0;i<difference;i++)
         {
             for(int j=0;j<6;j++)
-            {
+            {//Adding labels to the remaining spaces to keep a uniform look
                 topPanel.add(new JLabel("")); //txtEmpty
             }
         }
+        if(debuggingFlag){System.out.println("DATAP- before scroll initialise");}
         scroll = new JScrollPane(topPanel);
         scroll.setPreferredSize(new Dimension(800, 350));
         scroll.setVerticalScrollBarPolicy(scroll.VERTICAL_SCROLLBAR_ALWAYS);
         jf.add(scroll, BorderLayout.NORTH);
-        
+        if(debuggingFlag){System.out.println("DATAP- scroll added");}
+        if(debuggingFlag){System.out.println("DATAP- before validate & repaint jf");}
         jf.validate();
         jf.repaint();
+        if(debuggingFlag){System.out.println("DATA PANEL ADDDED");}
     }
     
     public void addCenterPanel()
     {
-        if(!guiCreatedBool)
+        if(debuggingFlag){System.out.println("ADD CENTER PANEL");}
+        jf.remove(centerPanel);
+        centerPanel = new JPanel(new GridLayout(3,6));
+
+        for(int i=0;i<6;i++)
         {
-            createFlightGui();
+            JLabel l1 = new JLabel("");
+            l1.setOpaque(true);
+            l1.setBackground(Color.GRAY);
+            centerPanel.add(l1);
         }
-            jf.remove(centerPanel);
-            centerPanel = new JPanel(new GridLayout(3,6));
-            
-            for(int i=0;i<6;i++)
-            {
-                JLabel l1 = new JLabel("");
-                l1.setOpaque(true);
-                l1.setBackground(Color.GRAY);
-                centerPanel.add(l1);
-            }
-            
-            centerPanel.add(yearLbl);
-            centerPanel.add(monthLbl);
-            centerPanel.add(dayLbl);
-            centerPanel.add(fromLbl2);
-            centerPanel.add(toLbl2);
-            centerPanel.add(addLbl);
-            
-            centerPanel.add(yearCbo);
-            centerPanel.add(monthCbo);
-            centerPanel.add(dayCbo);
-            centerPanel.add(fromCbo);
-            centerPanel.add(toCbo);
-            centerPanel.add(addFlight);
-            
-            jf.add(centerPanel, BorderLayout.CENTER);
-            jf.validate();
-            jf.repaint(); 
+
+        centerPanel.add(yearLbl);
+        centerPanel.add(monthLbl);
+        centerPanel.add(dayLbl);
+        centerPanel.add(fromLbl2);
+        centerPanel.add(toLbl2);
+        centerPanel.add(addLbl);
+
+        centerPanel.add(yearCbo);
+        centerPanel.add(monthCbo);
+        centerPanel.add(dayCbo);
+        centerPanel.add(fromCbo);
+        centerPanel.add(toCbo);
+        centerPanel.add(addFlight);
+
+        jf.add(centerPanel, BorderLayout.CENTER);
+        jf.validate();
+        jf.repaint(); 
+        if(debuggingFlag){System.out.println("CENTER PANEL ADDED");}
     }
     public void displayFilteredFlights()
     {
+        if(debuggingFlag){System.out.println("DISPLAY FILTERED FLIGHTS");}
        if(!guiCreatedBool)
         {
             createFlightGui();
@@ -381,7 +402,7 @@ public class Flights implements ActionListener
                // dataTxt = new String[amountFlights][5];
                 
                 while(result.next())
-                {                    
+                {
                     dataTxt[countRecords][0].setText(result.getInt("flightNumber")+"");
                     dataTxt[countRecords][1].setText(result.getDate("flightDate")+"");
                     dataTxt[countRecords][2].setText(result.getString("departCity"));
@@ -401,7 +422,7 @@ public class Flights implements ActionListener
             }
             catch(Exception e )
             {
-                System.out.println("Error: "+e);
+                System.out.println("RETRIEVE SELECTED FLIGHTS: "+e);
                 e.printStackTrace();
             }
             finally{
@@ -409,6 +430,7 @@ public class Flights implements ActionListener
                 conn.close();
                 
             } catch (SQLException e) {
+                System.out.println("CLOSE CONNECTION: " + e);
                 e.printStackTrace();
             }
         }
@@ -416,10 +438,13 @@ public class Flights implements ActionListener
         }
         catch (Exception err) 
         {
-            System.out.println("SEND SELECTED FLIGHTS: " + err);
-        }  
+            System.out.println("CONNECT DATABASE: " + err);
+            err.printStackTrace();
+        } 
+        if(debuggingFlag){System.out.println("FILTER FLIGHTS DISPLAYED");}
     }
     public void getAmountOfFilteredFlights(String departCity){
+        if(debuggingFlag){System.out.println("GET AMOUNT OF FILTERED FLIGHTS");}
         try
         {
             Connection conn = JavaConnectDB.connectDB();
@@ -438,8 +463,10 @@ public class Flights implements ActionListener
         {
              System.out.println("Error at count flight from database: \n"+count_e);
         }
+        if(debuggingFlag){System.out.println("AMOUNT OF FILTERED FLIGHTS RETRIEVED");}
     }
     public void getAmountOfFlights(){
+        if(debuggingFlag){System.out.println("GET AMOUNT OF FLIGHTS");}
         //GET AMOUNT OF FLIGHTS
         try
         {
@@ -459,9 +486,11 @@ public class Flights implements ActionListener
         {
              System.out.println("Error at count flight from database: \n"+count_e);
         }
+        if(debuggingFlag){System.out.println("AMOUNT OF FLIGHTS RETRIEVED");}
     }
     public void getAllFlights()
     {
+        if(debuggingFlag){System.out.println("GET ALL FLIGHTS");}
         if(!guiCreatedBool)
         {
             createFlightGui();
@@ -534,10 +563,11 @@ public class Flights implements ActionListener
         {
             System.out.println("SEND ALL FLIGHTS: " + err);
         }  
-        
+        if(debuggingFlag){System.out.println("ALL FLIGHTS RETRIEVED");}
     }
     public void displayAllFlights()
     {
+        if(debuggingFlag){System.out.println("DISPLAY FLIGHTS - SWITCH");}
         if(!filterCity)
         {
             getAmountOfFlights();
@@ -552,9 +582,9 @@ public class Flights implements ActionListener
         }        
        
         
+        if(debuggingFlag){System.out.println("FLIGHTS DISPLAYED - SWITCH");}
         
-        
-        }
+    }
     
     public void actionPerformed(ActionEvent e)
     {
@@ -764,10 +794,17 @@ public class Flights implements ActionListener
         {
             if(yearSelected&& monthSelected&& daySelected&& fromSelected&& toSelected)
             {
-                //JOptionPane.showMessageDialog(null, "Item may be added");
-               /* try
-                {              
-                    out.writeObject("Add Flight");  
+                CallableStatement callableStatement;
+                ResultSet result;
+                Connection conn;
+                
+                try
+                {            
+
+                    //newflightNum+=50;
+                    //get flight num
+                    String insert_Values_stmt="call ADD_FLIGHT(?,?,?,?)";                    
+                    conn = JavaConnectDB.connectDB();
                     int dateVal=0;
                     if(((String)monthCbo.getSelectedItem()).equals("January"))
                     {
@@ -808,23 +845,42 @@ public class Flights implements ActionListener
                     {
                         dateVal = 12;
                     }
-                    String dateString = (String)dayCbo.getSelectedItem()+"/"+dateVal+"/"+(String)yearCbo.getSelectedItem();
-                    out.writeObject(dateString+"");  
-                    out.writeObject((String)fromCbo.getSelectedItem());
-                    out.writeObject((String)toCbo.getSelectedItem());
-                    out.writeObject(priceForFlight+"");
-                    out.flush();
-                    //System.out.println("SERVER: >> "+(String)in.readObject()); 
-                    
-                    //retrieve all flights
-                    
-                    
+                    try 
+                    {  //P_DATE IN DATE, P_ARRIVE IN VARCHAR2, P_DEPART IN VARCHAR2, P_PRICE IN NUMBER 
+                        DateFormat dateFormat = new SimpleDateFormat("dd/mm/yyyy");
+                        
+                            String dateString = (String)dayCbo.getSelectedItem()+"/"+dateVal+"/"+(String)yearCbo.getSelectedItem();   
+                            java.util.Date fromDate = dateFormat.parse(dateString); 
+                            java.sql.Date sqlDate = new java.sql.Date(fromDate.getTime()); 
+                            System.out.println("Date: "+dateString);
+                            callableStatement = conn.prepareCall(insert_Values_stmt);
+                            callableStatement.setDate(1, sqlDate);
+                            callableStatement.setString(2, (String)toCbo.getSelectedItem());
+                            callableStatement.setString(3, (String)fromCbo.getSelectedItem());
+                            callableStatement.setString(4, priceForFlight+"");
+                            callableStatement.execute();
+                          //  result =  (ResultSet)callableStatement.getObject(1);        
+                            
+                        }
+                        catch(Exception ee )
+                        {
+                            System.out.println("ADD FLIGHT SQL: "+ee);
+                            ee.printStackTrace();
+                        }
+                        finally{
+                        try {
+                            conn.close();
+
+                        } catch (SQLException ee) {
+                            System.out.println("ADD FLIGHT CLOSE CONN: " + ee);
+                            ee.printStackTrace();
+                        }
+                    }
                 }
-                catch(Exception ee)
+                catch(Exception err) 
                 {
-                   System.out.println("Request Flight and write to GUI1: " + ee);
-                }
-                displayAllFlights();*/
+                    System.out.println("ADD FLIGHT: " + err);
+                }  
             }
             else
             {
@@ -845,6 +901,8 @@ public class Flights implements ActionListener
                     //------------------------------------------------------------------------------------------------------------------------------
                     //CALL TICKET CLASS
                     //retrieveAllTickets(currentActiveflightNumber);
+                    Ticket t = new Ticket();
+                    t.retrieveAllTickets(currentActiveflightNumber);
                     ticketQuantitySelected = false;
                 }
                 //not send all flights, get all flights... 
