@@ -16,17 +16,22 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
@@ -90,7 +95,32 @@ public class Ticket  implements ActionListener{
     //CLIENT
     public String clientName, clientSurname, clientId;
     
+    //QUANTITY GUI
+    private JFrame jfQ;
+    private JPanel centerPanelQ, northPanelQ, southPanelQ;
+    private JLabel ticketQuantityLbl, vegLbl, chicLbl, beefLbl, BeverageLbl;
+    private JCheckBox[] beverageQCB;
+    private JRadioButton[] vegetarianRB;
+    private JRadioButton[] chickenRB;
+    private JRadioButton[] beefRB;
+    private JScrollPane scrollQ;
+    private String[] quantityCboItems;
+    private JComboBox<String> quantityCbo;
+    private boolean[] comboQSelected;
+    ButtonGroup bgroupQ[];
+    private int quantityAmount;
+    //private boolean[] bgQSelected
+    private JButton cancelQBtn, confirmQBtn ;
+    //END OF QUANTITY GUI
+    //QUANTITY VARIABLES
+    private boolean guiSelectQuantityBool;
+    private double ticketPrice;
+    private int[][] mealSelection;
+    //END OF QUANTITY VARIABLES
     
+    private boolean ticketQuantitySelected;  
+    int amountReceipts;
+    int amountMeals;    
     public Ticket(){
         //CLIENT
         currentClientDetails = new String[4];
@@ -101,9 +131,17 @@ public class Ticket  implements ActionListener{
         guiCreatedClientBool = false;
         nameTTxt = new JTextField(10);
         surnameTTxt = new JTextField(10);
+        clientId = "";
         clientName = "";
         clientSurname = "";
         //ticketQuantitySelected = false;
+        //Quantity & Meal
+        ticketQuantitySelected = false;
+        quantityAmount = 0;
+        amountReceipts = 0;
+        amountMeals = 0;
+        
+        
     }
     public void updateClient()
     {
@@ -495,6 +533,27 @@ public class Ticket  implements ActionListener{
              System.out.println("Error at count flight from database: \n"+count_e);
         }
     }
+    public void getTicketPrice(){
+        
+        try
+        {
+            Connection conn = JavaConnectDB.connectDB();
+            String get_price_stmt = "SELECT seatprice FROM FLIGHT WHERE flightNumber = '"+flightNumber+ "'";
+            
+            PreparedStatement preStatement = conn.prepareStatement(get_price_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            while(result.next()){
+                ticketPrice = result.getInt(1);
+                
+            }
+            System.out.println("Ticket Price: "+ ticketPrice);
+            conn.close();
+        }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at count flight from database: \n"+count_e);
+        }
+    }
     public void getCancelled(){
         
         //GET AMOUNT OF FLIGHTS
@@ -529,9 +588,6 @@ public class Ticket  implements ActionListener{
     {
         //--------------------------------------------
         String select_Ticket_Table_stmt="{call RETRIEVE_TICKET(?,?,?,?,?,?,?)}"+"";
-       
-        
-
         CallableStatement callableStatement;
         ResultSet result;
         Connection conn;
@@ -607,10 +663,132 @@ public class Ticket  implements ActionListener{
         {
             System.out.println("SEND ALL FLIGHTS: " + err);
         } 
+    }
+     public void selectQuantityGui()
+    {
+        guiSelectQuantityBool = true;
+        jfQ = new JFrame("Quantity & Meals");
+        centerPanelQ = new JPanel(new GridLayout(11,4));
+        northPanelQ = new JPanel(new GridLayout(1,2));
+        southPanelQ = new JPanel(new GridLayout(1,2));
         
         
-           
+        ticketQuantityLbl = new JLabel("Select Ticket Quantity:");
+        northPanelQ.add(ticketQuantityLbl);
         
+        
+        
+        //String[] quantityCboItems =  {"",""};
+        switch(countSeatsTaken)
+        {
+            case 10:
+            {
+                String[] quantityCboItems = {"Flight Full"};
+                quantityCbo = new JComboBox<>(quantityCboItems);
+                quantityCbo.addActionListener(this);
+                centerPanelQ.add(quantityCbo);
+            }break;
+            case 9:{String[] quantityCboItems = {"1"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 8:{String[] quantityCboItems = {"1", "2"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 7:{String[] quantityCboItems = {"1", "2", "3"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 6:{String[] quantityCboItems = {"1", "2", "3", "4"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 5:{String[] quantityCboItems = {"1", "2", "3", "4", "5"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 4:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 3:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 2:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7","8"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 1:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7","8","9"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            case 0:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7","8","9","10"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
+            
+        } 
+        scrollQ = new JScrollPane(centerPanelQ);
+        scrollQ.setPreferredSize(new Dimension(400, 350));
+        scrollQ.setVerticalScrollBarPolicy(scrollQ.VERTICAL_SCROLLBAR_ALWAYS);
+        jfQ.add(scrollQ);
+        addCenterPanelQuantity(1);
+       // quantityCbo = new JComboBox<>(quantityCboItems);
+        cancelQBtn = new JButton("Cancel");
+        cancelQBtn.addActionListener(this);
+        confirmQBtn = new JButton("Submit Selection");
+        confirmQBtn.addActionListener(this);
+        
+        southPanelQ.add(cancelQBtn);
+        southPanelQ.add(confirmQBtn);
+        
+        jfQ.add(northPanelQ, BorderLayout.NORTH);
+        jfQ.add(southPanelQ, BorderLayout.SOUTH);
+        jfQ.setLocation(100,100);        
+        jfQ.setSize(400,370);
+        jfQ.setVisible(true);
+        jfQ.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); //DISPOSE_ON_CLOSE,  DISPOSE_ON_CLOSE 
+        jfQ.addWindowListener(new WindowAdapter() 
+        {
+            @Override
+            public void windowClosing(WindowEvent e) 
+            {
+                int result = JOptionPane.showConfirmDialog(jfQ, "Are you sure you would like to exit?");
+                if( result==JOptionPane.OK_OPTION)
+                {
+                    // NOW we change it to dispose on close..
+                    jfQ.setDefaultCloseOperation(jfT.DISPOSE_ON_CLOSE);
+                    jfQ.setVisible(false);
+                    jfQ.dispose();
+                    guiSelectQuantityBool = false;
+                }
+            }
+        });
+    }
+    public void addCenterPanelQuantity(int quantity)
+    {        
+        jfQ.remove(scrollQ);
+        centerPanelQ = new JPanel(new GridLayout(quantity+1,4));
+        scrollQ = new JScrollPane(centerPanelQ);
+        scrollQ.setPreferredSize(new Dimension(400, 350));
+        scrollQ.setVerticalScrollBarPolicy(scrollQ.VERTICAL_SCROLLBAR_ALWAYS);
+        vegLbl = new JLabel("Vegetarian");
+        chicLbl = new JLabel("Chicken");
+        beefLbl = new JLabel("Beef");
+        BeverageLbl = new JLabel("Beverage");
+        comboQSelected = new boolean[quantity];
+        ticketDetails = new boolean[quantity][4];
+        centerPanelQ.add(vegLbl);
+        centerPanelQ.add(chicLbl);
+        centerPanelQ.add(beefLbl);
+        centerPanelQ.add(BeverageLbl);
+        
+        vegetarianRB = new JRadioButton[quantity];
+        chickenRB = new JRadioButton[quantity];
+        beefRB = new JRadioButton[quantity];
+        bgroupQ = new ButtonGroup[quantity];
+        beverageQCB = new JCheckBox[quantity];
+        for(int i=0;i<quantity;i++)
+        {
+            vegetarianRB[i] = null;
+            vegetarianRB[i] = new JRadioButton();
+            vegetarianRB[i].addActionListener(this);
+            chickenRB[i] = null;
+            chickenRB[i] = new JRadioButton();
+            chickenRB[i].addActionListener(this);
+            beefRB[i] = null;
+            beefRB[i] = new JRadioButton();
+            beefRB[i].addActionListener(this);
+            bgroupQ[i] = null;
+            bgroupQ[i] = new ButtonGroup();
+            bgroupQ[i].add(vegetarianRB[i]);
+            bgroupQ[i].add(chickenRB[i]);
+            bgroupQ[i].add(beefRB[i]);
+            beverageQCB[i] = null;
+            beverageQCB[i] = new JCheckBox();
+            beverageQCB[i].addActionListener(this);
+            centerPanelQ.add(vegetarianRB[i]);
+            centerPanelQ.add(chickenRB[i]);
+            centerPanelQ.add(beefRB[i]);
+            centerPanelQ.add(beverageQCB[i]);
+            
+            
+        }
+        jfQ.add(scrollQ, BorderLayout.CENTER);
+        jfQ.validate();
+        jfQ.repaint();
     }
     
     public void actionPerformed(ActionEvent e)
@@ -660,7 +838,172 @@ public class Ticket  implements ActionListener{
         {
             
         }
-    
+        if(e.getSource() == selectQuantityBtn)
+        {
+            if(!guiSelectQuantityBool){
+                selectQuantityGui();
+            }
+            else{
+                JOptionPane.showMessageDialog(null, "Only one instance of the select client window may be open");
+            }
+        }
+        if(e.getSource()==quantityCbo)
+        {
+            addCenterPanelQuantity(Integer.parseInt((String)quantityCbo.getSelectedItem()));           
+        }
+        if(e.getSource() == confirmQBtn)
+        {
+            quantityAmount = Integer.parseInt((String)quantityCbo.getSelectedItem());
+            boolean[] flag = new boolean[quantityAmount];
+            boolean finalFlag = false;
+            mealSelection = new int[quantityAmount][4];
+            for(int i=0;i<quantityAmount;i++)
+            {
+                if((vegetarianRB[i].isSelected() || chickenRB[i].isSelected() || beefRB[i].isSelected()) )
+                {
+                    flag[i] = true;
+                }
+            }
+            for(int i=0;i<quantityAmount;i++)
+            {
+                if(!flag[i])
+                {
+                    finalFlag = true;
+                }
+            }
+            if(finalFlag){
+                JOptionPane.showMessageDialog(null, "You need to select a meal option for each ticket");
+            }
+            else
+            {
+                //save the details to db
+                jfQ.dispose();
+                guiSelectQuantityBool = false;
+                ticketQuantitySelected = true;
+                double flightPrice = 0.00;
+                getTicketPrice();
+                flightPrice = ticketPrice;
+              
+                ticketsQuantityTTxt.setText((quantityAmount+"").toString());
+                amountTTxt.setText((flightPrice*(Integer.parseInt(ticketsQuantityTTxt.getText())))+"" );
+                for(int m=0;m<quantityAmount;m++)
+                {
+                    if(vegetarianRB[m].isSelected()){mealSelection[m][0] = 0;}else{mealSelection[m][0] = -1;}
+                    if(chickenRB[m].isSelected()){mealSelection[m][1] = 0;}else{mealSelection[m][1] = -1;}
+                    if(beefRB[m].isSelected()){mealSelection[m][2] = 0;}else{mealSelection[m][2] = -1;}
+                    if(beverageQCB[m].isSelected()){mealSelection[m][3] = 0;}else{mealSelection[m][3] = -1;}
+                }
+            }
+        }
+        if(e.getSource() == cancelQBtn)
+        {
+            int result = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to close this window?");
+            if( result==JOptionPane.OK_OPTION)
+            {
+                // NOW we change it to dispose on close..
+                jfQ.setDefaultCloseOperation(jfQ.DISPOSE_ON_CLOSE);
+                jfQ.setVisible(false);
+                jfQ.dispose();
+                guiSelectQuantityBool = false;
+            }
+        }
+        if(e.getSource() == btnAddTicket)
+        {
+            
+            
+            if(!nameTTxt.getText().equals("") &&!surnameTTxt.getText().equals("") &&!amountTTxt.getText().equals("")&&ticketQuantitySelected==true)
+            { 
+                int ticketNumber = 0;
+                try
+                { 
+                    String add_Ticket_Table_stmt="{call ADD_TICKET(?,?,?,?)}"+"";
+                    CallableStatement callableStatement;
+                    ResultSet result;
+                    Connection conn;
+                    conn = JavaConnectDB.connectDB();
+                    try 
+                    {   
+                        callableStatement = conn.prepareCall(add_Ticket_Table_stmt);
+                        callableStatement.registerOutParameter(1, Types.INTEGER);
+                        callableStatement.setString(3, clientId);
+                        callableStatement.setInt(4, quantityAmount);
+                        callableStatement.setInt(2, flightNumber);
+                        //callableStatement.execute(); 
+                        callableStatement.executeUpdate();
+                        ticketNumber = callableStatement.getInt(1);
+                        
+                    }
+                    catch(Exception ee )
+                    {
+                        System.out.println("Error: "+ee);
+                        ee.printStackTrace();
+                    }
+                    finally
+                    {
+                        try 
+                        {
+                            conn.close();
+
+                        } 
+                        catch (SQLException ee) 
+                        {
+                            ee.printStackTrace();
+                        }
+                    }
+                }
+                catch (Exception err) 
+                {
+                    System.out.println("SEND ALL FLIGHTS: " + err);
+                }
+                //END OF ADD TICKET
+                //ADD MEALS
+                for(int i=0;i<quantityAmount;i++)
+                {
+                    try
+                    { //mealSelection
+                        String add_Meal_Table_stmt="{call ADD_MEALS(?,?,?,?,?)}"+"";
+                        CallableStatement callableStatement;
+                        ResultSet result;
+                        Connection conn;
+                        conn = JavaConnectDB.connectDB();
+                        try 
+                        {   
+                            callableStatement = conn.prepareCall(add_Meal_Table_stmt);
+                            callableStatement.setInt(1, ticketNumber);
+                            callableStatement.setInt(2, mealSelection[quantityAmount][0]);
+                            callableStatement.setInt(3, mealSelection[quantityAmount][1]);
+                            callableStatement.setInt(4, mealSelection[quantityAmount][2]);
+                            callableStatement.setInt(5, mealSelection[quantityAmount][3]);                            
+                            callableStatement.execute();  
+                        }
+                        catch(Exception ee )
+                        {
+                            System.out.println("Error: "+ee);
+                            ee.printStackTrace();
+                        }
+                        finally
+                        {
+                            try 
+                            {
+                                conn.close();
+                            } 
+                            catch (SQLException ee) 
+                            {
+                                ee.printStackTrace();
+                            }
+                        }
+                    }
+                    catch (Exception err) 
+                    {
+                        System.out.println("SEND ALL FLIGHTS: " + err);
+                    } 
+                }
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(null, "Please fill in all the fields");
+            }  
+        }
     }
 
     
