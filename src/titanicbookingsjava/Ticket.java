@@ -33,14 +33,14 @@ import oracle.jdbc.OracleTypes;
  *
  * @author foosh
  */
-public class Ticket  implements ActionListener{
+public class Ticket  implements ActionListener {
     //TICKET GUI
     private JFrame jfT;
     private JPanel topPanelT,centerPanelT, bottomPanelT;
     private int flightNumber;
     private int amountTickets;
     private int flightNumberT;
-    boolean flightCancelled;
+    boolean flightCancelled, guiCreatedClientBool;
     private int rowsT;
     private boolean guiCreatedTicketBool;
     private int currentActiveflightNumber;
@@ -64,10 +64,15 @@ public class Ticket  implements ActionListener{
     private JTextField ticketsQuantityTTxt;
     //BOTTOM PANEL    
     private JButton saveChangesTBtn, cancelFlightTBtn, deleteAllTicketsTBtn, deleteFlightTBtn;
+    
+    
+    //CLIENT
+    public String clientName, clientSurname, clientId;
     public Ticket(){
         guiCreatedTicketBool = false;
         rowsT = 0;
         flightCancelled = false;
+        guiCreatedClientBool = false;
         //ticketQuantitySelected = false;
     }
      public void createTicketGui(int flightnum)
@@ -390,7 +395,17 @@ public class Ticket  implements ActionListener{
     
     public void actionPerformed(ActionEvent e)
     {
-        
+        if(e.getSource() == selectClientBtn)
+        {
+            if(!guiCreatedClientBool){
+                guiCreatedClientBool = true;
+                selectClient selt = new selectClient();
+                selt.getAllClients();
+            }
+            else{
+                JOptionPane.showMessageDialog(null, "Only one instance of the select client window may be open");
+            }
+        }
     
     }
 }
