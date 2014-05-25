@@ -794,7 +794,7 @@ public class Ticket  implements ActionListener{
     public void actionPerformed(ActionEvent e)
     {
         if(e.getSource() == selectClientBtn)
-        {
+        {//DONE
             if(!guiCreatedClientBool){
                 guiCreatedClientBool = true;
                 
@@ -836,10 +836,12 @@ public class Ticket  implements ActionListener{
         }
         if(e.getSource() == createCbtn)
         {
+          //CREATE CLIENT  
             
+          //UPDATE CLIENT LIST
         }
         if(e.getSource() == selectQuantityBtn)
-        {
+        {//DONE
             if(!guiSelectQuantityBool){
                 selectQuantityGui();
             }
@@ -848,11 +850,11 @@ public class Ticket  implements ActionListener{
             }
         }
         if(e.getSource()==quantityCbo)
-        {
+        {//DONE
             addCenterPanelQuantity(Integer.parseInt((String)quantityCbo.getSelectedItem()));           
         }
         if(e.getSource() == confirmQBtn)
-        {
+        {//DONE
             quantityAmount = Integer.parseInt((String)quantityCbo.getSelectedItem());
             boolean[] flag = new boolean[quantityAmount];
             boolean finalFlag = false;
@@ -896,7 +898,7 @@ public class Ticket  implements ActionListener{
             }
         }
         if(e.getSource() == cancelQBtn)
-        {
+        {//DONE
             int result = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to close this window?");
             if( result==JOptionPane.OK_OPTION)
             {
@@ -970,10 +972,10 @@ public class Ticket  implements ActionListener{
                         {   
                             callableStatement = conn.prepareCall(add_Meal_Table_stmt);
                             callableStatement.setInt(1, ticketNumber);
-                            callableStatement.setInt(2, mealSelection[quantityAmount][0]);
-                            callableStatement.setInt(3, mealSelection[quantityAmount][1]);
-                            callableStatement.setInt(4, mealSelection[quantityAmount][2]);
-                            callableStatement.setInt(5, mealSelection[quantityAmount][3]);                            
+                            callableStatement.setInt(2, mealSelection[i][0]);
+                            callableStatement.setInt(3, mealSelection[i][1]);
+                            callableStatement.setInt(4, mealSelection[i][2]);
+                            callableStatement.setInt(5, mealSelection[i][3]);                            
                             callableStatement.execute();  
                         }
                         catch(Exception ee )
@@ -997,7 +999,49 @@ public class Ticket  implements ActionListener{
                     {
                         System.out.println("SEND ALL FLIGHTS: " + err);
                     } 
+                }                
+                //Update seats available
+                int seatsSold = 0;
+                int seatsAvail = 0;
+                try
+                {
+                    Connection conn = JavaConnectDB.connectDB();
+                    String retrieve_seats_stmt = "SELECT seatsSold, seatsAvailable FROM Flight WHERE flightNumber = '"+flightNumber+"'";
+                    PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+                    ResultSet result = preStatement.executeQuery();   
+                    while(result.next()){
+                        seatsSold = result.getInt(1);
+                        seatsAvail = result.getInt(2);
+                    }
+                    conn.close();
                 }
+                catch(Exception count_e)
+                {
+                     System.out.println("Error at adding ticket, update seats\n"+count_e+"\n");
+                     count_e.printStackTrace();
+                }
+                try
+                {
+                    System.out.println("Amoun seats sold: "+ seatsSold+ ", and adding "+quantityAmount);
+                    Connection conn = JavaConnectDB.connectDB();
+                    
+                    seatsSold = seatsSold + quantityAmount;
+                    seatsAvail = seatsAvail - quantityAmount;
+                    //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                    String update_seats_stmt = "UPDATE Flight set seatsSold = '"+ seatsSold +"', seatsavailable = '" + seatsAvail +"'  WHERE flightNumber = '"+flightNumber+ "'   ";
+
+                    CallableStatement callableStatement =  conn.prepareCall(update_seats_stmt);
+                    callableStatement.execute();   
+                    conn.close();
+                }
+                catch(Exception count_e)
+                {
+                     System.out.println("Error at adding ticket, update seats\n"+count_e+"\n");
+                     count_e.printStackTrace();
+                }
+                //Refresh Ticket Gui
+                System.out.println("Ticket Added - Refreshed Ticket GUI");
+                retrieveAllTickets(flightNumber);
             }
             else
             {
