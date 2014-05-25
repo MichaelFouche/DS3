@@ -911,8 +911,6 @@ public class Ticket  implements ActionListener{
         }
         if(e.getSource() == btnAddTicket)
         {
-            
-            
             if(!nameTTxt.getText().equals("") &&!surnameTTxt.getText().equals("") &&!amountTTxt.getText().equals("")&&ticketQuantitySelected==true)
             { 
                 int ticketNumber = 0;
@@ -1047,6 +1045,28 @@ public class Ticket  implements ActionListener{
             {
                 JOptionPane.showMessageDialog(null, "Please fill in all the fields");
             }  
+        }
+        for(int i=0;i<rowsT;i++)
+        {
+            if(e.getSource() == deleteTBtn[i])
+            {
+                //create procedure to delete (specific ticket)
+                
+                
+                //Update ticket gui
+                //Update amount of available tickets
+                //Update amount of sold tickets
+                //Update Flight gui
+                
+                //what happens with any receipts?
+            }
+        }
+        for(int i=0;i<rowsT;i++)
+        {
+            if(e.getSource() == paymentTBtn[i])
+            {
+                //Create gui for receipt
+            }
         }
     }
 
