@@ -603,6 +603,7 @@ public class Ticket  implements ActionListener{
                 guiCreatedTicketBool = true;
             }        
             addTopPanel(); 
+            getCancelled();
             conn = JavaConnectDB.connectDB();
             try 
             {   
@@ -629,16 +630,17 @@ public class Ticket  implements ActionListener{
                                          
                     
                     countSeatsTaken = countSeatsTaken+( Integer.parseInt( dataTTxt[countRecords][3].getText()+""));
+                    if(flightCancelled)
+                    {
+                        for(int j=0;j<5;j++)
+                        {
+                            dataTTxt[countRecords][j].setOpaque(true);
+                            dataTTxt[countRecords][j].setBackground(Color.ORANGE);
+                        }
+                    }
                     countRecords++;
                 }
-                if(flightCancelled)
-                {
-                    for(int j=0;j<5;j++)
-                    {
-                        dataTTxt[countRecords][j].setOpaque(true);
-                        dataTTxt[countRecords][j].setBackground(Color.ORANGE);
-                    }
-                }
+               
                 addCenterPanelTicket();
             }
             catch(Exception e )
@@ -1052,14 +1054,94 @@ public class Ticket  implements ActionListener{
             {
                 //create procedure to delete (specific ticket)
                 
+                int guiResult = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to delete this ticket?\nAll the meals associated to this ticket will also be deleted!");
+                if( guiResult==JOptionPane.OK_OPTION)
+                {
+                    // NOW we change it to dispose on close..
+                    
                 
-                //Update ticket gui
-                retrieveAllTickets(flightNumber);
-                //Update amount of available tickets
-                //Update amount of sold tickets
-                //Update Flight gui
                 
-                //what happens with any receipts?
+                    //Update amount of available tickets
+                    //Update amount of sold tickets
+                    //Update Flight gui
+                    int seatsSold = 0;
+                    int seatsAvail = 0;
+                    try
+                    {
+                        Connection conn = JavaConnectDB.connectDB();
+                        String retrieve_seats_stmt = "SELECT seatsSold, seatsAvailable FROM Flight WHERE flightNumber = '"+flightNumber+"'";
+                        PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+                        ResultSet result = preStatement.executeQuery();   
+                        while(result.next()){
+                            seatsSold = result.getInt(1);
+                            seatsAvail = result.getInt(2);
+                        }
+                        conn.close();
+                    }
+                    catch(Exception count_e)
+                    {
+                         System.out.println("Error at deleting ticket, update seats\n"+count_e+"\n");
+                         count_e.printStackTrace();
+                    }
+                    try
+                    {
+
+                        Connection conn = JavaConnectDB.connectDB();
+
+                        seatsSold = seatsSold - Integer.parseInt(dataTTxt[i][3].getText());
+                        seatsAvail = seatsAvail + Integer.parseInt(dataTTxt[i][3].getText());
+                        //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                        String update_seats_stmt = "UPDATE Flight set seatsSold = '"+ seatsSold +"', seatsavailable = '" + seatsAvail +"'  WHERE flightNumber = '"+flightNumber+ "'   ";
+
+                        CallableStatement callableStatement =  conn.prepareCall(update_seats_stmt);
+                        callableStatement.execute();   
+                        conn.close();
+                    }
+                    catch(Exception count_e)
+                    {
+                         System.out.println("Error delete ticket, update seats\n"+count_e+"\n");
+                         count_e.printStackTrace();
+                    }
+                    //Refresh Ticket Gui
+                    System.out.println("Ticket Deleter - Refreshed Ticket GUI");
+
+
+                    //DELETE MEAL
+                    try
+                    {
+
+                        Connection conn = JavaConnectDB.connectDB(); 
+                        //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                        String delete_meal_stmt = "DELETE FROM MEAL WHERE ticketNumber = '"+dataTTxt[i][0].getText() +"'  ";
+
+                        CallableStatement callableStatement =  conn.prepareCall(delete_meal_stmt);
+                        callableStatement.execute();   
+                        conn.close();
+                    }
+                    catch(Exception count_e)
+                    {
+                         System.out.println("Error at deleting  meal\n"+count_e+"\n");
+                         count_e.printStackTrace();
+                    }
+                    try
+                    {
+
+                        Connection conn = JavaConnectDB.connectDB(); 
+                        //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                        String delete_ticket_stmt = "DELETE FROM TICKET  WHERE flightNumber = '"+flightNumber+ "' AND ticketNumber = '"+dataTTxt[i][0].getText() +"'  ";
+
+                        CallableStatement callableStatement =  conn.prepareCall(delete_ticket_stmt);
+                        callableStatement.execute();   
+                        conn.close();
+                    }
+                    catch(Exception count_e)
+                    {
+                         System.out.println("Error at deleting ticket, update seats\n"+count_e+"\n");
+                         count_e.printStackTrace();
+                    }
+                    //what happens with any receipts?
+                    retrieveAllTickets(flightNumber);
+                }
             }
         }
         
@@ -1092,11 +1174,11 @@ public class Ticket  implements ActionListener{
             int cancelledNum =0;
             if(flightCancelled)
             {
-                cancelledNum = -1;
+                cancelledNum = 0;
             }
             else
             {
-                cancelledNum = 0;
+                cancelledNum = -1;
             }
             //Update cancelled to the other
             try
@@ -1113,7 +1195,7 @@ public class Ticket  implements ActionListener{
                 }
                 catch(Exception count_e)
                 {
-                     System.out.println("Error at adding ticket, update seats\n"+count_e+"\n");
+                     System.out.println("Error at changing status\n"+count_e+"\n");
                      count_e.printStackTrace();
                 }
             //refresh Ticket
@@ -1123,21 +1205,188 @@ public class Ticket  implements ActionListener{
         //deleteAllTicketsTBtn
         if(e.getSource() == deleteAllTicketsTBtn)
         {
-            //delete all tickets
-            //Update amount of available tickets
-            //Update amount of sold tickets
-            //Update Ticket gui       
-            retrieveAllTickets(flightNumber);
+            int guiResult = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to delete All the tickets in this flight?\nAll the meals associated to these tickets will also be deleted!");
+            if( guiResult==JOptionPane.OK_OPTION)
+            {
+                try
+                { 
+                    String retrieve_ticket_with_flightnum_Table_stmt="SELECT ticketNumber from TICKET WHERE flightNumber = '"+ flightNumber+"' "+"";
+
+                    Connection conn;
+                    conn = JavaConnectDB.connectDB();
+                    try 
+                    {  
+                        PreparedStatement preStatement = conn.prepareCall(retrieve_ticket_with_flightnum_Table_stmt);
+                        ResultSet result = preStatement.executeQuery();   
+                        while(result.next())
+                        {
+                            int currTicketNumber = result.getInt(1);
+                            try
+                            {
+
+                                Connection conn2 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_meal_stmt = "DELETE FROM MEAL WHERE ticketNumber = '"+ currTicketNumber +"'  ";
+
+                                CallableStatement callableStatement =  conn2.prepareCall(delete_meal_stmt);
+                                callableStatement.execute();   
+                                conn2.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting  meal\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
+                            try
+                            {
+
+                                Connection conn3 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_ticket_stmt = "DELETE FROM TICKET  WHERE flightNumber = '"+flightNumber+ "' AND ticketNumber = '"+currTicketNumber+"'  ";
+
+                                CallableStatement callableStatement =  conn3.prepareCall(delete_ticket_stmt);
+                                callableStatement.execute();   
+                                conn3.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting ticket, update seats\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
+                        }
+
+                    }
+                    catch(Exception ee )
+                    {
+                        System.out.println("Error delete all tickets: "+ee);
+                        ee.printStackTrace();
+                    }
+                    finally
+                    {
+                        try 
+                        {
+                            conn.close();
+
+                        } 
+                        catch (SQLException ee) 
+                        {
+                            ee.printStackTrace();
+                        }
+                    }
+                }
+                catch (Exception err) 
+                {
+                    System.out.println("DELETE ALL TICKETS: " + err);
+                }
+                //select all tickets in flight
+                        //delete all meals with that ticket number
+                        //delete that ticket    
+
+                //Reset amount of available tickets
+                //Reset amount of sold tickets
+
+                //Update Ticket gui       
+                retrieveAllTickets(flightNumber);
+            }
         }
         //deleteFlightTBtn
         if(e.getSource() == deleteFlightTBtn)
         {
             //delete flight and all tickets
-            
-            //close ticket
-        }
-    }
+            int guiResult = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to delete this flight, \nall the tickets in the flight, \nand the meal preferences associated to the tickets?");
+            if( guiResult==JOptionPane.OK_OPTION)
+            {
+                try
+                { 
+                    String retrieve_ticket_with_flightnum_Table_stmt="SELECT ticketNumber from TICKET WHERE flightNumber = '"+ flightNumber+"' "+"";
 
-    
+                    Connection conn;
+                    conn = JavaConnectDB.connectDB();
+                    try 
+                    {  
+                        PreparedStatement preStatement = conn.prepareCall(retrieve_ticket_with_flightnum_Table_stmt);
+                        ResultSet result = preStatement.executeQuery();   
+                        while(result.next())
+                        {
+                            int currTicketNumber = result.getInt(1);
+                            try
+                            {
+
+                                Connection conn2 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_meal_stmt = "DELETE FROM MEAL WHERE ticketNumber = '"+ currTicketNumber +"'  ";
+
+                                CallableStatement callableStatement =  conn2.prepareCall(delete_meal_stmt);
+                                callableStatement.execute();   
+                                conn2.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting  meal\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
+                            try
+                            {
+
+                                Connection conn3 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_ticket_stmt = "DELETE FROM TICKET  WHERE flightNumber = '"+flightNumber+ "' AND ticketNumber = '"+currTicketNumber+"'  ";
+
+                                CallableStatement callableStatement =  conn3.prepareCall(delete_ticket_stmt);
+                                callableStatement.execute();   
+                                conn3.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting ticket, update seats\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
+                        }
+                        try
+                        {
+
+                            Connection conn3 = JavaConnectDB.connectDB(); 
+                            //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                            String delete_flight_stmt = "DELETE FROM FLIGHT WHERE flightNumber = '"+flightNumber+ "'  ";
+
+                            CallableStatement callableStatement =  conn3.prepareCall(delete_flight_stmt);
+                            callableStatement.execute();   
+                            conn3.close();
+                        }
+                        catch(Exception count_e)
+                        {
+                             System.out.println("Error at deleting flight\n"+count_e+"\n");
+                             count_e.printStackTrace();
+                        }
+
+                    }
+                    catch(Exception ee )
+                    {
+                        System.out.println("Error delete flight: "+ee);
+                        ee.printStackTrace();
+                    }
+                    finally
+                    {
+                        try 
+                        {
+                            conn.close();
+
+                        } 
+                        catch (SQLException ee) 
+                        {
+                            ee.printStackTrace();
+                        }
+                    }
+                }
+                catch (Exception err) 
+                {
+                    System.out.println("DELETE FLIGHT: " + err);
+                }
+                jfT.dispose();
+            //close ticket
+            }
+        }
+
+    }
    
 }
