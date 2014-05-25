@@ -118,6 +118,16 @@ public class Ticket  implements ActionListener{
     private int[][] mealSelection;
     //END OF QUANTITY VARIABLES
     
+    //PAYMENT
+    private JFrame jfP;
+    private JPanel northPanelP, centerPanelP, southPanelP;
+    private JLabel flightPLbl, fromPLbl, toPLbl, clientPLbl, contactPLbl, amountTicketsPLbl, priceptPLbl, paidPLbl, duePLbl, amountPLbl,
+    flightPLbl2, fromPLbl2, toPLbl2, clientPLbl2, contactPLbl2, amountTicketsPLbl2, priceptPLbl2, paidPLbl2, duePLbl2, amountPLbl2;
+    private JTextField amountPTxt;
+    private JButton cancelPBtn, payPBtn;
+    private boolean guiMakePaymentBool;
+    //END OF PAYMENT
+    
     private boolean ticketQuantitySelected;  
     int amountReceipts;
     int amountMeals;    
@@ -793,6 +803,130 @@ public class Ticket  implements ActionListener{
         jfQ.repaint();
     }
     
+    public void makePaymentGui()
+    {
+        guiMakePaymentBool = true;
+        /*
+         *  private JFrame jfP;
+    private JPanel northPanelP, centerPanelP, southPanelP;
+    private JLabel flightPLbl, fromPLbl, toPLbl, clientPLbl, contactPLbl, amountTicketsPLbl, priceptPLbl, paidPLbl, duePLbl, amountPLbl,
+    flightPLbl2, fromPLbl2, toPLbl2, clientPLbl2, contactPLbl2, amountTicketsPLbl2, priceptPLbl2, paidPLbl2, duePLbl2, amountPLbl2;
+    private JTextField amountPTxt;
+    private JButton cancelPBtn, payPBtn;
+         */
+        jfP = new JFrame("Make Payment");
+        //northPanelP = new JPanel(new GridLayout(9,2));
+        centerPanelP = new JPanel(new GridLayout(1,2));
+        southPanelP = new JPanel(new GridLayout(1,2));
+        flightPLbl = new JLabel("Flight");
+        //fromPLbl = new JLabel("");
+        //toPLbl = new JLabel("");
+        clientPLbl = new JLabel("Client: ");
+        contactPLbl = new JLabel("Contact: ");
+        amountTicketsPLbl = new JLabel("Amount of Tickets: ");
+        priceptPLbl = new JLabel("Price per Ticket:");
+        paidPLbl = new JLabel("Total Paid: ");
+        duePLbl = new JLabel("Total Due: ");
+        amountPLbl = new JLabel("Payment Amount: ");
+        
+        flightPLbl2 = new JLabel("-");
+        clientPLbl2 = new JLabel("-");
+        contactPLbl2 = new JLabel("-");
+        amountTicketsPLbl2 = new JLabel("-");
+        priceptPLbl2 = new JLabel("-");
+        paidPLbl2 = new JLabel("-");
+        duePLbl2 = new JLabel("-");
+        
+        //getAllReceipts();
+        //getAllMeals();
+        
+        
+        int passengerIDTemp = 0;
+        double totalPaid = 0.0;
+        double ticketPrice = 0.0;
+        int amountTicketsBooked =0;
+       /* for(int j=0;j<amountFlights;j++)
+        {
+            if(flight[j].getFlightNumber() ==currentActiveflightNumber)
+            {
+                flightPLbl2.setText(""+currentActiveflightNumber+" From: "+ flight[j].getDepartCity()+" To: "+ flight[j].getArriveCity());
+                ticketPrice=  flight[j].getSeatPrice();
+                priceptPLbl2.setText("R"+ticketPrice+"");
+            }                    
+        }
+        for(int k=0;k<rowsT;k++)
+        {
+           if(ticket[k].getFlightNumber()==(currentActiveflightNumber))
+           {
+               amountTicketsPLbl2.setText(ticket[k].getSeatsBooked()+"");
+               passengerIDTemp= ticket[k].getPassengerID();
+               totalPaid = ticket[k].getAmountPaid();
+               paidPLbl2.setText("R"+totalPaid+"");
+               amountTicketsBooked = ticket[k].getSeatsBooked();
+           }
+               
+        }
+        for(int m=0;m<amountClients;m++)
+        {
+            if(passenger[m].getPassengerID()== passengerIDTemp)
+            {
+                clientPLbl2.setText(passenger[m].getpName() + " " +passenger[m].getpSurname());                        
+                contactPLbl2.setText(passenger[m].getContactNumber());
+            }
+        }
+       duePLbl2.setText((ticketPrice*amountTicketsBooked)-totalPaid+"");
+*/
+        amountPTxt = new JTextField(10);
+        
+        cancelPBtn = new JButton("Cancel");
+        cancelPBtn.addActionListener(this);
+        payPBtn = new JButton("Make Payment");
+        payPBtn.addActionListener(this);
+        
+        /*centerPanelP.add(flightPLbl);
+        centerPanelP.add(flightPLbl2);
+        centerPanelP.add(clientPLbl);
+        centerPanelP.add(clientPLbl2);
+        centerPanelP.add(contactPLbl);
+        centerPanelP.add(contactPLbl2);
+        centerPanelP.add(amountTicketsPLbl);
+        centerPanelP.add(amountTicketsPLbl2);
+        centerPanelP.add(priceptPLbl);
+        centerPanelP.add(priceptPLbl2);
+        centerPanelP.add(paidPLbl);
+        centerPanelP.add(paidPLbl2);
+        centerPanelP.add(duePLbl);
+        centerPanelP.add(duePLbl2);*/
+        centerPanelP.add(amountPLbl);
+        centerPanelP.add(amountPTxt);
+        
+        southPanelP.add(cancelPBtn);
+        southPanelP.add(payPBtn);
+        jfP.add(centerPanelP, BorderLayout.CENTER);
+        jfP.add(southPanelP, BorderLayout.SOUTH);
+        jfP.setLocation(100,100);        
+        jfP.setSize(400,370);
+        jfP.setVisible(true);
+        jfP.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); //DISPOSE_ON_CLOSE,  DISPOSE_ON_CLOSE 
+        jfP.addWindowListener(new WindowAdapter() 
+        {
+            @Override
+            public void windowClosing(WindowEvent e) 
+            {
+                int result = JOptionPane.showConfirmDialog(jfP, "Are you sure you would like to exit?");
+                if( result==JOptionPane.OK_OPTION)
+                {
+                    // NOW we change it to dispose on close..
+                    jfP.setDefaultCloseOperation(jfP.DISPOSE_ON_CLOSE);
+                    jfP.setVisible(false);
+                    jfP.dispose();
+                    guiMakePaymentBool = false;
+                }
+            }
+        });
+        
+    }
+    
     public void actionPerformed(ActionEvent e)
     {
         if(e.getSource() == selectClientBtn)
@@ -1105,7 +1239,22 @@ public class Ticket  implements ActionListener{
                     //Refresh Ticket Gui
                     System.out.println("Ticket Deleter - Refreshed Ticket GUI");
 
+                    try
+                    {
 
+                        Connection conn4 = JavaConnectDB.connectDB(); 
+                        //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                        String delete_receipt_stmt = "DELETE FROM RECEIPT WHERE ticketNumber = '"+ dataTTxt[i][0].getText() +"'  ";
+
+                        CallableStatement callableStatement =  conn4.prepareCall(delete_receipt_stmt);
+                        callableStatement.execute();   
+                        conn4.close();
+                    }
+                    catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting  meal\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
                     //DELETE MEAL
                     try
                     {
@@ -1224,6 +1373,22 @@ public class Ticket  implements ActionListener{
                             try
                             {
 
+                                Connection conn4 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_receipt_stmt = "DELETE FROM RECEIPT WHERE ticketNumber = '"+ currTicketNumber +"'  ";
+
+                                CallableStatement callableStatement =  conn4.prepareCall(delete_receipt_stmt);
+                                callableStatement.execute();   
+                                conn4.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting  meal\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
+                            try
+                            {
+
                                 Connection conn2 = JavaConnectDB.connectDB(); 
                                 //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
                                 String delete_meal_stmt = "DELETE FROM MEAL WHERE ticketNumber = '"+ currTicketNumber +"'  ";
@@ -1239,7 +1404,6 @@ public class Ticket  implements ActionListener{
                             }
                             try
                             {
-
                                 Connection conn3 = JavaConnectDB.connectDB(); 
                                 //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
                                 String delete_ticket_stmt = "DELETE FROM TICKET  WHERE flightNumber = '"+flightNumber+ "' AND ticketNumber = '"+currTicketNumber+"'  ";
@@ -1309,6 +1473,22 @@ public class Ticket  implements ActionListener{
                         while(result.next())
                         {
                             int currTicketNumber = result.getInt(1);
+                            try
+                            {
+
+                                Connection conn4 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_receipt_stmt = "DELETE FROM RECEIPT WHERE ticketNumber = '"+ currTicketNumber +"'  ";
+
+                                CallableStatement callableStatement =  conn4.prepareCall(delete_receipt_stmt);
+                                callableStatement.execute();   
+                                conn4.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting  receipt\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
                             try
                             {
 
@@ -1386,7 +1566,40 @@ public class Ticket  implements ActionListener{
             //close ticket
             }
         }
-
+        for(int i=0;i<rowsT;i++)
+        {            
+            if(e.getSource()== paymentTBtn[i])
+            {
+                if(guiMakePaymentBool)
+                {
+                    JOptionPane.showMessageDialog(null, "Please close all the payment windows before opening another");
+                }
+                else{
+                    makePaymentGui();
+                }
+                
+                
+            }
+        }
+        if(e.getSource() == cancelPBtn)
+        {
+            int result = JOptionPane.showConfirmDialog(jfP, "Are you sure you would like to close this window?");
+            if( result==JOptionPane.OK_OPTION)
+            {
+                // NOW we change it to dispose on close..
+                jfP.setDefaultCloseOperation(jfP.DISPOSE_ON_CLOSE);
+                jfP.setVisible(false);
+                jfP.dispose();
+                guiSelectQuantityBool = false;
+            }
+        }
+        if(e.getSource() == payPBtn)
+        {
+            //update amount payed
+            //create invoice
+            JOptionPane.showMessageDialog(null, "The payment will go through when there is coding to allow it to go through. nuff said");
+            //amount paid, date of payment
+        }
     }
    
 }
