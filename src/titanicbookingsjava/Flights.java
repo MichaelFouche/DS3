@@ -209,9 +209,9 @@ public class Flights implements ActionListener
         centerPanel.add(addFlight);
         
         //BOTTOM
-        backBtn = new JButton("Back");
+        backBtn = new JButton("Reload all flights");
         backBtn.addActionListener(this);
-        saveBtn = new JButton("Save & Exit");
+        saveBtn = new JButton("Exit Program");
         saveBtn.addActionListener(this);
         
         bottomPanel.add(backBtn);
@@ -544,7 +544,7 @@ public class Flights implements ActionListener
                     }
                     countRecords++;
                 }
-                System.out.println("done" + countRecords);
+                System.out.println("Retrieved all " + countRecords+ " flights");
             }
             catch(Exception e )
             {
@@ -1026,6 +1026,20 @@ public class Flights implements ActionListener
             jfhelp.setSize(420,580);
             jfhelp.setVisible(true);
             jfhelp.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        }
+        if(e.getSource()==backBtn)
+        {
+            filterCity = false;
+            displayAllFlights();
+        }
+        if(e.getSource()==saveBtn)
+        {
+            int dialogButton = JOptionPane.YES_NO_OPTION;
+            int dialogResult = JOptionPane.showConfirmDialog (null, "Are you sure you want to exit?","Warning",dialogButton);
+            if(dialogResult == JOptionPane.YES_OPTION)
+            {
+                System.exit(0);
+            }
         }
     }
 }
