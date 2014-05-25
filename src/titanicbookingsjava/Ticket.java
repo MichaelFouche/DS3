@@ -530,7 +530,7 @@ public class Ticket  implements ActionListener{
         }
         catch(Exception count_e)
         {
-             System.out.println("Error at count flight from database: \n"+count_e);
+             System.out.println("Error at getAmountOfTicketsOnFlight \n"+count_e);
         }
     }
     public void getTicketPrice(){
@@ -551,7 +551,7 @@ public class Ticket  implements ActionListener{
         }
         catch(Exception count_e)
         {
-             System.out.println("Error at count flight from database: \n"+count_e);
+             System.out.println("Error at getTicketPrice: \n"+count_e);
         }
     }
     public void getCancelled(){
@@ -575,12 +575,12 @@ public class Ticket  implements ActionListener{
             {
                 flightCancelled = true;
             }  
-            System.out.println("Amount of Tickets: "+ amountTickets);
+            //System.out.println("Amount of Tickets: "+ amountTickets);
             conn.close();
         }
         catch(Exception count_e)
         {
-             System.out.println("Error at count flight from database: \n"+count_e);
+             System.out.println("Error at get cancelled from database: \n"+count_e);
         }
     }
     
@@ -1054,6 +1054,7 @@ public class Ticket  implements ActionListener{
                 
                 
                 //Update ticket gui
+                retrieveAllTickets(flightNumber);
                 //Update amount of available tickets
                 //Update amount of sold tickets
                 //Update Flight gui
@@ -1061,12 +1062,79 @@ public class Ticket  implements ActionListener{
                 //what happens with any receipts?
             }
         }
+        
         for(int i=0;i<rowsT;i++)
         {
             if(e.getSource() == paymentTBtn[i])
             {
                 //Create gui for receipt
             }
+        }
+        //saveChangesTBtn close flight management
+        if(e.getSource() == saveChangesTBtn)
+        {
+            int result = JOptionPane.showConfirmDialog(jfT, "Are you sure you would like to close this window?");
+            if( result==JOptionPane.OK_OPTION)
+            {
+                // NOW we change it to dispose on close..
+                jfT.setDefaultCloseOperation(jfT.DISPOSE_ON_CLOSE);
+                jfT.setVisible(false);
+                jfT.dispose();
+                guiCreatedClientBool = false;
+            }
+        }
+        //cancelFlightTBtn,
+        if(e.getSource() == cancelFlightTBtn)
+        {
+            //Get current status
+            getCancelled();
+            
+            int cancelledNum =0;
+            if(flightCancelled)
+            {
+                cancelledNum = -1;
+            }
+            else
+            {
+                cancelledNum = 0;
+            }
+            //Update cancelled to the other
+            try
+                {
+                    
+                    Connection conn = JavaConnectDB.connectDB();
+                    
+                    //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                    String update_cancelled_stmt = "UPDATE Flight set cancelled = '"+ cancelledNum +"'  WHERE flightNumber = '"+flightNumber+ "'   ";
+
+                    CallableStatement callableStatement =  conn.prepareCall(update_cancelled_stmt);
+                    callableStatement.execute();   
+                    conn.close();
+                }
+                catch(Exception count_e)
+                {
+                     System.out.println("Error at adding ticket, update seats\n"+count_e+"\n");
+                     count_e.printStackTrace();
+                }
+            //refresh Ticket
+            retrieveAllTickets(flightNumber);
+        }
+        
+        //deleteAllTicketsTBtn
+        if(e.getSource() == deleteAllTicketsTBtn)
+        {
+            //delete all tickets
+            //Update amount of available tickets
+            //Update amount of sold tickets
+            //Update Ticket gui       
+            retrieveAllTickets(flightNumber);
+        }
+        //deleteFlightTBtn
+        if(e.getSource() == deleteFlightTBtn)
+        {
+            //delete flight and all tickets
+            
+            //close ticket
         }
     }
 
