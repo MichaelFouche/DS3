@@ -883,6 +883,7 @@ public class Flights implements ActionListener
                 {
                     System.out.println("ADD FLIGHT: " + err);
                 }  
+                displayAllFlights();
             }
             else
             {

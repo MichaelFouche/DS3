@@ -637,7 +637,8 @@ public class Ticket  implements ActionListener{
                     dataTTxt[countRecords][2].setText(result.getString("pSurname"));
                     dataTTxt[countRecords][3].setText(result.getInt("seatsBooked")+"");
                     dataTTxt[countRecords][4].setText(result.getDouble("amountPaid")+""); 
-                                         
+                    
+                    
                     
                     countSeatsTaken = countSeatsTaken+( Integer.parseInt( dataTTxt[countRecords][3].getText()+""));
                     if(flightCancelled)
@@ -688,8 +689,24 @@ public class Ticket  implements ActionListener{
         ticketQuantityLbl = new JLabel("Select Ticket Quantity:");
         northPanelQ.add(ticketQuantityLbl);
         
-        
-        
+        int seatsSold = 0;
+        try
+        {
+            Connection conn = JavaConnectDB.connectDB();
+            String retrieve_seats_stmt = "SELECT seatsSold FROM Flight WHERE flightNumber = '"+flightNumber+"'";
+            PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            while(result.next()){
+                seatsSold = result.getInt(1);
+            }
+            conn.close();
+        }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at adding ticket, update seats\n"+count_e+"\n");
+             count_e.printStackTrace();
+        }
+        countSeatsTaken = seatsSold;
         //String[] quantityCboItems =  {"",""};
         switch(countSeatsTaken)
         {
@@ -803,7 +820,7 @@ public class Ticket  implements ActionListener{
         jfQ.repaint();
     }
     
-    public void makePaymentGui()
+    public void makePaymentGui(int clientIndex)
     {
         guiMakePaymentBool = true;
         /*
@@ -816,7 +833,7 @@ public class Ticket  implements ActionListener{
          */
         jfP = new JFrame("Make Payment");
         //northPanelP = new JPanel(new GridLayout(9,2));
-        centerPanelP = new JPanel(new GridLayout(1,2));
+        centerPanelP = new JPanel(new GridLayout(8,2));
         southPanelP = new JPanel(new GridLayout(1,2));
         flightPLbl = new JLabel("Flight");
         //fromPLbl = new JLabel("");
@@ -829,22 +846,89 @@ public class Ticket  implements ActionListener{
         duePLbl = new JLabel("Total Due: ");
         amountPLbl = new JLabel("Payment Amount: ");
         
-        flightPLbl2 = new JLabel("-");
-        clientPLbl2 = new JLabel("-");
-        contactPLbl2 = new JLabel("-");
-        amountTicketsPLbl2 = new JLabel("-");
-        priceptPLbl2 = new JLabel("-");
-        paidPLbl2 = new JLabel("-");
-        duePLbl2 = new JLabel("-");
+        String clientName = dataTTxt[clientIndex][1].getText();
+        String clientSurname = dataTTxt[clientIndex][2].getText();
+        String clientContact = "";//get contact from sql
+        String ticketId = dataTTxt[clientIndex][0].getText();
+        
+        
+        double pricePerTicket = 0.0; //get from sql
+        double totalPaid = 0.0;
+        double totalDue = 0.0;
+        
+        try
+        {
+            Connection conn = JavaConnectDB.connectDB();
+            String retrieve_seats_stmt = "SELECT contactNumber FROM Passenger JOIN Ticket on ticket.passengerid = passenger.passengerID WHERE ticket.flightNumber = '"+flightNumber+"' AND TicketNumber = '"+ticketId+"'";
+            PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            while(result.next()){
+                clientContact = result.getString(1);                
+            }
+            conn.close();
+        }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at get client contactnumber at make payment\n"+count_e+"\n");
+             count_e.printStackTrace();
+        }
+        try
+        {
+            Connection conn = JavaConnectDB.connectDB();
+            String retrieve_seats_stmt = "SELECT seatPrice FROM Flight WHERE flightNumber = '"+flightNumber+"'";
+            PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            while(result.next()){
+                pricePerTicket = result.getDouble(1);                
+            }
+            conn.close();
+        }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at get seatPrice contactnumber at make payment\n"+count_e+"\n");
+             count_e.printStackTrace();
+        }
+        
+        try
+        {
+            Connection conn = JavaConnectDB.connectDB();
+            String retrieve_seats_stmt = "SELECT amountPaid FROM receipt WHERE TicketNumber = '"+ticketId+"'";
+            PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+            ResultSet result = preStatement.executeQuery();   
+            while(result.next()){
+                totalPaid =totalPaid+ result.getDouble(1);                
+            }
+            conn.close();
+        }
+        catch(Exception count_e)
+        {
+             System.out.println("Error at get totalpaid at make payment\n"+count_e+"\n");
+             count_e.printStackTrace();
+        }
+        totalDue = (pricePerTicket*Double.parseDouble(dataTTxt[clientIndex][3].getText()))-totalPaid; 
+        
+        flightPLbl2 = new JLabel("-" +flightNumberT);
+        clientPLbl2 = new JLabel("-" + clientName + " "+clientSurname);
+        contactPLbl2 = new JLabel("-" + clientContact);
+        amountTicketsPLbl2 = new JLabel("-" + dataTTxt[clientIndex][3].getText());
+        priceptPLbl2 = new JLabel("-" + "R"+pricePerTicket);
+        paidPLbl2 = new JLabel("-" + "R"+totalPaid);
+        duePLbl2 = new JLabel("-"+ "R"+totalDue);
         
         //getAllReceipts();
         //getAllMeals();
         
         
-        int passengerIDTemp = 0;
-        double totalPaid = 0.0;
-        double ticketPrice = 0.0;
-        int amountTicketsBooked =0;
+        /*  flightnumber = 
+            client
+            contact
+            amount of tickets
+            price per ticket
+            total paid
+            total due
+        
+            enter payment amount
+        */
        /* for(int j=0;j<amountFlights;j++)
         {
             if(flight[j].getFlightNumber() ==currentActiveflightNumber)
@@ -883,7 +967,7 @@ public class Ticket  implements ActionListener{
         payPBtn = new JButton("Make Payment");
         payPBtn.addActionListener(this);
         
-        /*centerPanelP.add(flightPLbl);
+        centerPanelP.add(flightPLbl);
         centerPanelP.add(flightPLbl2);
         centerPanelP.add(clientPLbl);
         centerPanelP.add(clientPLbl2);
@@ -896,7 +980,7 @@ public class Ticket  implements ActionListener{
         centerPanelP.add(paidPLbl);
         centerPanelP.add(paidPLbl2);
         centerPanelP.add(duePLbl);
-        centerPanelP.add(duePLbl2);*/
+        centerPanelP.add(duePLbl2);
         centerPanelP.add(amountPLbl);
         centerPanelP.add(amountPTxt);
         
@@ -1156,11 +1240,12 @@ public class Ticket  implements ActionListener{
                 }
                 try
                 {
-                    System.out.println("Amoun seats sold: "+ seatsSold+ ", and adding "+quantityAmount);
+                    System.out.println("Amount seats sold: "+ seatsSold+ ", and adding "+quantityAmount);
                     Connection conn = JavaConnectDB.connectDB();
                     
                     seatsSold = seatsSold + quantityAmount;
                     seatsAvail = seatsAvail - quantityAmount;
+                    countSeatsTaken = seatsSold;
                     //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
                     String update_seats_stmt = "UPDATE Flight set seatsSold = '"+ seatsSold +"', seatsavailable = '" + seatsAvail +"'  WHERE flightNumber = '"+flightNumber+ "'   ";
 
@@ -1224,9 +1309,10 @@ public class Ticket  implements ActionListener{
 
                         seatsSold = seatsSold - Integer.parseInt(dataTTxt[i][3].getText());
                         seatsAvail = seatsAvail + Integer.parseInt(dataTTxt[i][3].getText());
+                        System.out.println("Delete seats, now available: "+seatsAvail+" and the sold amount is: "+seatsSold);
                         //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
                         String update_seats_stmt = "UPDATE Flight set seatsSold = '"+ seatsSold +"', seatsavailable = '" + seatsAvail +"'  WHERE flightNumber = '"+flightNumber+ "'   ";
-
+                        countSeatsTaken = seatsSold;
                         CallableStatement callableStatement =  conn.prepareCall(update_seats_stmt);
                         callableStatement.execute();   
                         conn.close();
@@ -1450,6 +1536,23 @@ public class Ticket  implements ActionListener{
                 //Reset amount of sold tickets
 
                 //Update Ticket gui       
+                try
+                {
+                    Connection conn = JavaConnectDB.connectDB();
+                    int seatsSold = 0;
+                    int seatsAvail = 10;
+                    //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                    String update_seats_stmt = "UPDATE Flight set seatsSold = '"+ seatsSold +"', seatsavailable = '" + seatsAvail +"'  WHERE flightNumber = '"+flightNumber+ "'   ";
+
+                    CallableStatement callableStatement =  conn.prepareCall(update_seats_stmt);
+                    callableStatement.execute();   
+                    conn.close();
+                }
+                catch(Exception count_e)
+                {
+                     System.out.println("Error delete ticket, update seats\n"+count_e+"\n");
+                     count_e.printStackTrace();
+                }
                 retrieveAllTickets(flightNumber);
             }
         }
@@ -1575,7 +1678,7 @@ public class Ticket  implements ActionListener{
                     JOptionPane.showMessageDialog(null, "Please close all the payment windows before opening another");
                 }
                 else{
-                    makePaymentGui();
+                    makePaymentGui(i);
                 }
                 
                 
