@@ -126,6 +126,8 @@ public class Ticket  implements ActionListener{
     private JTextField amountPTxt;
     private JButton cancelPBtn, payPBtn;
     private boolean guiMakePaymentBool;
+    private String clientID, ticketId;
+    private double totalDue;
     //END OF PAYMENT
     
     private boolean ticketQuantitySelected;  
@@ -849,21 +851,22 @@ public class Ticket  implements ActionListener{
         String clientName = dataTTxt[clientIndex][1].getText();
         String clientSurname = dataTTxt[clientIndex][2].getText();
         String clientContact = "";//get contact from sql
-        String ticketId = dataTTxt[clientIndex][0].getText();
+        ticketId = dataTTxt[clientIndex][0].getText();
         
         
         double pricePerTicket = 0.0; //get from sql
         double totalPaid = 0.0;
-        double totalDue = 0.0;
+        totalDue = 0.0;
         
         try
         {
             Connection conn = JavaConnectDB.connectDB();
-            String retrieve_seats_stmt = "SELECT contactNumber FROM Passenger JOIN Ticket on ticket.passengerid = passenger.passengerID WHERE ticket.flightNumber = '"+flightNumber+"' AND TicketNumber = '"+ticketId+"'";
+            String retrieve_seats_stmt = "SELECT contactNumber, Passenger.passengerid FROM Passenger JOIN Ticket on ticket.passengerid = passenger.passengerID WHERE ticket.flightNumber = '"+flightNumber+"' AND TicketNumber = '"+ticketId+"'";
             PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
             ResultSet result = preStatement.executeQuery();   
             while(result.next()){
-                clientContact = result.getString(1);                
+                clientContact = result.getString(1); 
+                clientID = result.getString(2); 
             }
             conn.close();
         }
@@ -907,13 +910,13 @@ public class Ticket  implements ActionListener{
         }
         totalDue = (pricePerTicket*Double.parseDouble(dataTTxt[clientIndex][3].getText()))-totalPaid; 
         
-        flightPLbl2 = new JLabel("-" +flightNumberT);
-        clientPLbl2 = new JLabel("-" + clientName + " "+clientSurname);
-        contactPLbl2 = new JLabel("-" + clientContact);
-        amountTicketsPLbl2 = new JLabel("-" + dataTTxt[clientIndex][3].getText());
-        priceptPLbl2 = new JLabel("-" + "R"+pricePerTicket);
-        paidPLbl2 = new JLabel("-" + "R"+totalPaid);
-        duePLbl2 = new JLabel("-"+ "R"+totalDue);
+        flightPLbl2 = new JLabel("" +flightNumberT);
+        clientPLbl2 = new JLabel("" + clientName + " "+clientSurname);
+        contactPLbl2 = new JLabel("" + clientContact);
+        amountTicketsPLbl2 = new JLabel("" + dataTTxt[clientIndex][3].getText());
+        priceptPLbl2 = new JLabel("" + "R"+pricePerTicket);
+        paidPLbl2 = new JLabel("" + "R"+totalPaid);
+        duePLbl2 = new JLabel(""+ "R"+totalDue);
         
         //getAllReceipts();
         //getAllMeals();
@@ -1054,12 +1057,7 @@ public class Ticket  implements ActionListener{
                 guiCreatedClientBool = false;
             }
         }
-        if(e.getSource() == createCbtn)
-        {
-          //CREATE CLIENT  
-            
-          //UPDATE CLIENT LIST
-        }
+        
         if(e.getSource() == selectQuantityBtn)
         {//DONE
             if(!guiSelectQuantityBool){
@@ -1128,6 +1126,50 @@ public class Ticket  implements ActionListener{
                 jfQ.dispose();
                 guiSelectQuantityBool = false;
             }
+        }
+        if(e.getSource() == createCbtn)
+        {
+            //ADD_Passenger
+          //CREATE CLIENT  
+            try
+                { 
+                    String add_Ticket_Table_stmt="{call ADD_Passenger(?,?,?)}"+"";
+                    CallableStatement callableStatement;
+                    ResultSet result;
+                    Connection conn;
+                    conn = JavaConnectDB.connectDB();
+                    try 
+                    {   
+                        callableStatement = conn.prepareCall(add_Ticket_Table_stmt);
+                        callableStatement.setString(3, clientId);
+                        callableStatement.setInt(4, quantityAmount);
+                        callableStatement.setInt(2, flightNumber);
+                        callableStatement.executeUpdate();                        
+                    }
+                    catch(Exception ee )
+                    {
+                        System.out.println("Error: "+ee);
+                        ee.printStackTrace();
+                    }
+                    finally
+                    {
+                        try 
+                        {
+                            conn.close();
+
+                        } 
+                        catch (SQLException ee) 
+                        {
+                            ee.printStackTrace();
+                        }
+                    }
+                }
+                catch (Exception err) 
+                {
+                    System.out.println("SEND ALL FLIGHTS: " + err);
+                }
+            
+          //UPDATE CLIENT LIST
         }
         if(e.getSource() == btnAddTicket)
         {
@@ -1693,14 +1735,79 @@ public class Ticket  implements ActionListener{
                 jfP.setDefaultCloseOperation(jfP.DISPOSE_ON_CLOSE);
                 jfP.setVisible(false);
                 jfP.dispose();
-                guiSelectQuantityBool = false;
+                //guiSelectQuantityBool = false;
+                guiMakePaymentBool = false;
             }
         }
         if(e.getSource() == payPBtn)
         {
+            try
+            {
+                double paymentAmount = Double.parseDouble(amountPTxt.getText());
+                if((totalDue-paymentAmount)<0) 
+                {
+                    JOptionPane.showMessageDialog(null, "Please enter a value less than the total due");
+                }
+                else
+                {
+                   int resultQuestion = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to make a payment of R"+paymentAmount+"?");
+            
+                    if(resultQuestion==JOptionPane.OK_OPTION)
+                    {
+                       String add_Receipt_Table_stmt="{call ADD_RECEIPT(?,?,?,?)}"+"";
+                        CallableStatement callableStatement;
+                        ResultSet result;
+                        Connection conn;
+                        conn = JavaConnectDB.connectDB();
+                        try 
+                        {   
+                            callableStatement = conn.prepareCall(add_Receipt_Table_stmt);
+
+                            callableStatement.setString(1, "");
+                            callableStatement.setDouble(2, paymentAmount);
+                            callableStatement.setInt(3, Integer.parseInt(ticketId));
+                            callableStatement.setInt(4, Integer.parseInt(clientID));
+                            //callableStatement.execute(); 
+                            callableStatement.executeUpdate();
+                            //ticketNumber = callableStatement.getInt(1);
+
+                        }
+                        catch(Exception ee )
+                        {
+                            System.out.println("Error: "+ee);
+                            ee.printStackTrace();
+                        }
+                        finally
+                        {
+                            try 
+                            {
+                                conn.close();
+                            } 
+                            catch (SQLException ee) 
+                            {
+                                ee.printStackTrace();
+                            }
+                        }
+
+                        JOptionPane.showMessageDialog(null, "Payment successfully processed"  );
+                        guiMakePaymentBool = false;
+                        jfP.dispose(); 
+                    } 
+                }
+                
+            }
+            catch(NumberFormatException numE)
+            {
+                JOptionPane.showMessageDialog(null, "Please enter a numeric value for the payment amount");
+            }
+            catch(Exception ee)
+            {
+                JOptionPane.showMessageDialog(null, "Please check the amount entered.");
+            }
+            
             //update amount payed
             //create invoice
-            JOptionPane.showMessageDialog(null, "The payment will go through when there is coding to allow it to go through. nuff said");
+            //OptionPane.showMessageDialog(null, "The payment will go through when there is coding to allow it to go through. nuff said");
             //amount paid, date of payment
         }
     }
