@@ -23,6 +23,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -166,7 +168,7 @@ public class Ticket  implements ActionListener{
         guiCreatedClientBool = true;
         jfC = new JFrame("Client");
         
-        centerPanelC = new JPanel(new GridLayout(amountClients+3,7));
+        centerPanelC = new JPanel(new GridLayout(amountClients+3,6));
         dataCTxt = new JTextField[amountClients+1][4];
         updateCBtn = new JButton[amountClients];
         deleteCBtn = new JButton[amountClients];
@@ -180,7 +182,7 @@ public class Ticket  implements ActionListener{
         centerPanelC.add(surnameLbl);
         centerPanelC.add(contactLbl);
         centerPanelC.add(new JLabel() );
-        centerPanelC.add(new JLabel());
+       // centerPanelC.add(new JLabel());
         centerPanelC.add(new JLabel());
         
         for(int i=0;i<amountClients;i++){
@@ -206,7 +208,7 @@ public class Ticket  implements ActionListener{
            // centerPanelC.add(new JLabel());
            // centerPanelC.add(new JLabel());
             centerPanelC.add(updateCBtn[i]);
-            centerPanelC.add(deleteCBtn[i]);
+            //centerPanelC.add(deleteCBtn[i]);
         }
         for(int i=0;i<4;i++){
             dataCTxt[amountClients][i] = null;
@@ -713,6 +715,7 @@ public class Ticket  implements ActionListener{
         }
         countSeatsTaken = seatsSold;
         //String[] quantityCboItems =  {"",""};
+        
         switch(countSeatsTaken)
         {
             case 10:
@@ -732,7 +735,7 @@ public class Ticket  implements ActionListener{
             case 2:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7","8"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
             case 1:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7","8","9"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
             case 0:{String[] quantityCboItems = {"1", "2", "3", "4", "5","6","7","8","9","10"};quantityCbo = new JComboBox<>(quantityCboItems);quantityCbo.addActionListener(this);northPanelQ.add(quantityCbo);}break;
-            
+
         } 
         scrollQ = new JScrollPane(centerPanelQ);
         scrollQ.setPreferredSize(new Dimension(400, 350));
@@ -744,10 +747,10 @@ public class Ticket  implements ActionListener{
         cancelQBtn.addActionListener(this);
         confirmQBtn = new JButton("Submit Selection");
         confirmQBtn.addActionListener(this);
-        
+
         southPanelQ.add(cancelQBtn);
         southPanelQ.add(confirmQBtn);
-        
+
         jfQ.add(northPanelQ, BorderLayout.NORTH);
         jfQ.add(southPanelQ, BorderLayout.SOUTH);
         jfQ.setLocation(100,100);        
@@ -770,6 +773,7 @@ public class Ticket  implements ActionListener{
                 }
             }
         });
+        
     }
     public void addCenterPanelQuantity(int quantity)
     {        
@@ -1063,7 +1067,29 @@ public class Ticket  implements ActionListener{
         
         if(e.getSource() == selectQuantityBtn)
         {//DONE
-            if(!guiSelectQuantityBool){
+            int seatsSold = 0;
+            try
+            {
+                Connection conn = JavaConnectDB.connectDB();
+                String retrieve_seats_stmt = "SELECT seatsSold FROM Flight WHERE flightNumber = '"+flightNumber+"'";
+                PreparedStatement preStatement = conn.prepareStatement(retrieve_seats_stmt);
+                ResultSet result = preStatement.executeQuery();   
+                while(result.next()){
+                    seatsSold = result.getInt(1);
+                }
+                conn.close();
+            }
+            catch(Exception count_e)
+            {
+                 System.out.println("Error at adding ticket, update seats\n"+count_e+"\n");
+                 count_e.printStackTrace();
+            }
+            
+            if(seatsSold>=10)
+            {
+                JOptionPane.showMessageDialog(null, "The Flight is full");
+            }
+            else if(!guiSelectQuantityBool){
                 selectQuantityGui();
             }
             else{
@@ -1072,7 +1098,8 @@ public class Ticket  implements ActionListener{
         }
         if(e.getSource()==quantityCbo)
         {//DONE
-            addCenterPanelQuantity(Integer.parseInt((String)quantityCbo.getSelectedItem()));           
+            addCenterPanelQuantity(Integer.parseInt((String)quantityCbo.getSelectedItem()));     
+            
         }
         if(e.getSource() == confirmQBtn)
         {//DONE
@@ -1882,11 +1909,108 @@ public class Ticket  implements ActionListener{
             }
             
         }
+        for(int i=0;i<amountClients;i++)
+        {//scrapping this function because needs to update each flight quantities
+            /*
+            if(e.getSource()==deleteCBtn[i])
+            {
+                String clientid = dataCTxt[i][0].getText();
+                //delete all meals with client
+                //delete all receipts with client
+                //delete all tickets with client
+                int resultQ = JOptionPane.showConfirmDialog(jfC, "Are you sure you want to delete this client?");
+                if( resultQ==JOptionPane.OK_OPTION)
+                {
+                    try
+                    { 
+                        String retrieve_ticket_with_clientid_Table_stmt="SELECT ticketNumber from TICKET WHERE passengerid = '"+ clientid+"' "+"";
+
+                        Connection conn;
+                        conn = JavaConnectDB.connectDB();
+                        try 
+                        {  
+                            PreparedStatement preStatement = conn.prepareCall(retrieve_ticket_with_clientid_Table_stmt);
+                            ResultSet result = preStatement.executeQuery();   
+                            while(result.next())
+                            {
+                                int tickeNum = result.getInt(1);
+                                try
+                                {
+
+                                    Connection conn4 = JavaConnectDB.connectDB(); 
+                                    //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                    String delete_receipt_stmt = "DELETE FROM RECEIPT WHERE ticketNumber = '"+ tickeNum +"'  ";
+
+                                    CallableStatement callableStatement =  conn4.prepareCall(delete_receipt_stmt);
+                                    callableStatement.execute();   
+                                    conn4.close();
+                                }
+                                catch(Exception count_e)
+                                {
+                                     System.out.println("Error at deleting Client receipt\n"+count_e+"\n");
+                                     count_e.printStackTrace();
+                                }
+                                try
+                                {
+
+                                    Connection conn2 = JavaConnectDB.connectDB(); 
+                                    //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                    String delete_meal_stmt = "DELETE FROM MEAL WHERE ticketNumber = '"+ tickeNum +"'  ";
+
+                                    CallableStatement callableStatement =  conn2.prepareCall(delete_meal_stmt);
+                                    callableStatement.execute();   
+                                    conn2.close();
+                                }
+                                catch(Exception count_e)
+                                {
+                                     System.out.println("Error at deleting Client meal\n"+count_e+"\n");
+                                     count_e.printStackTrace();
+                                }
+                            }
+                            try
+                            {
+
+                                Connection conn3 = JavaConnectDB.connectDB(); 
+                                //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                                String delete_flight_stmt = "DELETE FROM Passenger WHERE passengerid = '"+clientid+ "'  ";
+
+                                CallableStatement callableStatement =  conn3.prepareCall(delete_flight_stmt);
+                                callableStatement.execute();   
+                                conn3.close();
+                            }
+                            catch(Exception count_e)
+                            {
+                                 System.out.println("Error at deleting Client\n"+count_e+"\n");
+                                 count_e.printStackTrace();
+                            }
+
+                        }
+                        catch(Exception ee )
+                        {
+                            System.out.println("Error delete Client: "+ee);
+                            ee.printStackTrace();
+                        }
+                        finally
+                        {
+                            try 
+                            {
+                                conn.close();
+
+                            } 
+                            catch (SQLException ee) 
+                            {
+                                ee.printStackTrace();
+                            }
+                        }
+                    }
+                    catch (Exception err) 
+                    {
+                        System.out.println("DELETE Client: " + err);
+                    }
+                }
+            }
+       */ }
         
-        if(e.getSource()==deleteCBtn)
-        {
-            
-        }
     }
    
 }
