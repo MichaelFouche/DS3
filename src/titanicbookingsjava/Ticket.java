@@ -166,7 +166,7 @@ public class Ticket  implements ActionListener{
         guiCreatedClientBool = true;
         jfC = new JFrame("Client");
         
-        centerPanelC = new JPanel(new GridLayout(amountClients+3,5));
+        centerPanelC = new JPanel(new GridLayout(amountClients+3,7));
         dataCTxt = new JTextField[amountClients+1][4];
         updateCBtn = new JButton[amountClients];
         deleteCBtn = new JButton[amountClients];
@@ -180,8 +180,8 @@ public class Ticket  implements ActionListener{
         centerPanelC.add(surnameLbl);
         centerPanelC.add(contactLbl);
         centerPanelC.add(new JLabel() );
-       // centerPanelC.add(new JLabel());
-       // centerPanelC.add(new JLabel());
+        centerPanelC.add(new JLabel());
+        centerPanelC.add(new JLabel());
         
         for(int i=0;i<amountClients;i++){
             
@@ -205,14 +205,16 @@ public class Ticket  implements ActionListener{
             centerPanelC.add(selectCBtn[i]);
            // centerPanelC.add(new JLabel());
            // centerPanelC.add(new JLabel());
-          //  centerPanelC.add(updateCBtn[i]);
-          //  centerPanelC.add(deleteCBtn[i]);
+            centerPanelC.add(updateCBtn[i]);
+            centerPanelC.add(deleteCBtn[i]);
         }
         for(int i=0;i<4;i++){
             dataCTxt[amountClients][i] = null;
             dataCTxt[amountClients][i] = new JTextField(10);
             centerPanelC.add(dataCTxt[amountClients][i]);
         }
+        dataCTxt[amountClients][0].setEditable(false);
+        
         createCbtn = new JButton("Create");
         createCbtn.addActionListener(this);
         createCbtn.setBackground(Color.ORANGE);
@@ -220,7 +222,8 @@ public class Ticket  implements ActionListener{
         cancelCBtn.addActionListener(this);
         cancelCBtn.setBackground(Color.ORANGE);
         centerPanelC.add(createCbtn);
-        //centerPanelC.add(new JLabel());
+        centerPanelC.add(new JLabel());
+        centerPanelC.add(new JLabel());
         centerPanelC.add(cancelCBtn);
         //amountClients
         
@@ -1127,50 +1130,7 @@ public class Ticket  implements ActionListener{
                 guiSelectQuantityBool = false;
             }
         }
-        if(e.getSource() == createCbtn)
-        {
-            //ADD_Passenger
-          //CREATE CLIENT  
-            try
-                { 
-                    String add_Ticket_Table_stmt="{call ADD_Passenger(?,?,?)}"+"";
-                    CallableStatement callableStatement;
-                    ResultSet result;
-                    Connection conn;
-                    conn = JavaConnectDB.connectDB();
-                    try 
-                    {   
-                        callableStatement = conn.prepareCall(add_Ticket_Table_stmt);
-                        callableStatement.setString(3, clientId);
-                        callableStatement.setInt(4, quantityAmount);
-                        callableStatement.setInt(2, flightNumber);
-                        callableStatement.executeUpdate();                        
-                    }
-                    catch(Exception ee )
-                    {
-                        System.out.println("Error: "+ee);
-                        ee.printStackTrace();
-                    }
-                    finally
-                    {
-                        try 
-                        {
-                            conn.close();
-
-                        } 
-                        catch (SQLException ee) 
-                        {
-                            ee.printStackTrace();
-                        }
-                    }
-                }
-                catch (Exception err) 
-                {
-                    System.out.println("SEND ALL FLIGHTS: " + err);
-                }
-            
-          //UPDATE CLIENT LIST
-        }
+        
         if(e.getSource() == btnAddTicket)
         {
             if(!nameTTxt.getText().equals("") &&!surnameTTxt.getText().equals("") &&!amountTTxt.getText().equals("")&&ticketQuantitySelected==true)
@@ -1750,7 +1710,7 @@ public class Ticket  implements ActionListener{
                 }
                 else
                 {
-                   int resultQuestion = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to make a payment of R"+paymentAmount+"?");
+                   int resultQuestion = JOptionPane.showConfirmDialog(jfP, "Are you sure you would like to make a payment of R"+paymentAmount+"?");
             
                     if(resultQuestion==JOptionPane.OK_OPTION)
                     {
@@ -1809,6 +1769,123 @@ public class Ticket  implements ActionListener{
             //create invoice
             //OptionPane.showMessageDialog(null, "The payment will go through when there is coding to allow it to go through. nuff said");
             //amount paid, date of payment
+        }
+        if(e.getSource() == createCbtn)
+        {
+            //ADD_Passenger
+          //CREATE CLIENT  
+            //dataCTxt[amountClients][i]
+            String newClientName = dataCTxt[amountClients][1].getText();
+            String newClientSurname =  dataCTxt[amountClients][2].getText();
+            String newClientContact = dataCTxt[amountClients][3].getText();
+            if(newClientName !=null && newClientSurname !=null && newClientContact !=null)
+            {
+                int resultQuestion = JOptionPane.showConfirmDialog(jfC, "Are you sure you would like to add "+newClientName+ " " +newClientSurname+ " with contact number "+newClientContact + " to the database?");
+            
+                if(resultQuestion==JOptionPane.OK_OPTION)
+                {
+                    try
+                    { 
+                        String add_Ticket_Table_stmt="{call ADD_Passenger(?,?,?)}"+"";
+                        CallableStatement callableStatement;
+                        ResultSet result;
+                        Connection conn;
+                        conn = JavaConnectDB.connectDB();
+                        try 
+                        {   
+                            callableStatement = conn.prepareCall(add_Ticket_Table_stmt);
+                            callableStatement.setString(1, newClientName);
+                            callableStatement.setString(2, newClientSurname);
+                            callableStatement.setString(3, newClientContact);
+                            callableStatement.executeUpdate();                        
+                        }
+                        catch(Exception ee )
+                        {
+                            System.out.println("Error: "+ee);
+                            ee.printStackTrace();
+                        }
+                        finally
+                        {
+                            try 
+                            {
+                                conn.close();
+                                JOptionPane.showMessageDialog(null, "Client added.");
+                                jfC.dispose();
+                                getAllClients();
+                            } 
+                            catch (SQLException ee) 
+                            {
+                                ee.printStackTrace();
+                            }
+                        }
+                    }
+                    catch (Exception err) 
+                    {
+                        System.out.println("SEND ALL FLIGHTS: " + err);
+                    }
+                }
+            }
+            else
+            {
+                JOptionPane.showMessageDialog(null, "Please enter valid information in all the required textboxes.");
+            }
+            
+          //UPDATE CLIENT LIST
+        }
+        for(int i=0;i<amountClients;i++){
+            if(e.getSource()==updateCBtn[i])
+            {
+                if(updateCBtn[i].getText().equals("Save"))
+                {
+                    if(dataCTxt[i][1].getText()!=null &&dataCTxt[i][2].getText()!=null && dataCTxt[i][3].getText()!=null)
+                    {
+                        try
+                        {
+                            Connection conn = JavaConnectDB.connectDB();
+                            //"UPDATE Flight"+" SET seatSold = "+seatsBooked+",seatsAvailable = "+seatsAvail+ " WHERE flightNumber = "+flightNum+
+                            String update_seats_stmt = "UPDATE Passenger set pname = '"+ dataCTxt[i][1].getText() +"', psurname = '" + dataCTxt[i][2].getText() +"', contactNumber = '"+dataCTxt[i][3].getText()+"'  WHERE passengerID = '"+dataCTxt[i][0].getText()+ "'   ";
+
+                            CallableStatement callableStatement =  conn.prepareCall(update_seats_stmt);
+                            callableStatement.execute();   
+                            conn.close();
+                            JOptionPane.showMessageDialog(null, "Updated passenger successfully");
+                        }
+                        catch(Exception count_e)
+                        {
+                            JOptionPane.showMessageDialog(null, "A error occured");
+                             System.out.println("Error updating client\n"+count_e+"\n");
+                             count_e.printStackTrace();
+                        }
+
+                        dataCTxt[i][1].setEditable(false);
+                        dataCTxt[i][2].setEditable(false);
+                        dataCTxt[i][3].setEditable(false);
+                        updateCBtn[i].setText("Update");
+                        jfC.validate();                
+                        jfC.repaint();
+                    }
+                    else
+                    {
+                        JOptionPane.showMessageDialog(null, "Please fill in valid values");
+                    }
+                    
+                }
+                else
+                {
+                    dataCTxt[i][1].setEditable(true);
+                    dataCTxt[i][2].setEditable(true);
+                    dataCTxt[i][3].setEditable(true);
+                    updateCBtn[i].setText("Save");
+                    jfC.validate();                
+                    jfC.repaint();
+                }
+            }
+            
+        }
+        
+        if(e.getSource()==deleteCBtn)
+        {
+            
         }
     }
    
